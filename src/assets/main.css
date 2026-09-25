@@ -1,5 +1,6 @@
 body {
   font-family: Aptos, Arial, sans-serif;
+  --fser-brand-primary: #ce2027;
 }
 
 .btn-primary {
