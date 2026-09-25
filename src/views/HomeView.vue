@@ -6,7 +6,7 @@
 		<!-- Hero -->
 	<section class="bg-light py-5">
 		<div class="container py-5 text-center">
-			<img src="/public/logo-horizontal.png" />
+			<img src="/logo-horizontal.png" alt="Fargo Small Engine Repair" class="img-fluid" width="929" height="213" />
 		</div>
 		<div class="container py-5 text-center">
 			<h1 class="display-4 fw-bold">
