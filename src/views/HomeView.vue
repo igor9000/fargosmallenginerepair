@@ -82,17 +82,12 @@ useHead({
 		<div class="container">
 			<div class="row align-items-center">
 
-				<div class="col-lg-6">
+				<div class="col-lg-12">
 					<h2>About Fargo Small Engine Repair</h2>
 
 					<p>
-						Local small engine repair with straightforward service,
-						honest diagnostics, and quality workmanship.
+						Local small engine repair with superior service, honest diagnostics, and quality workmanship.
 					</p>
-				</div>
-
-				<div class="col-lg-6">
-					<!-- image later -->
 				</div>
 
 			</div>
