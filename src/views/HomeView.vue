@@ -1,4 +1,5 @@
 <script setup>
+	import homecard from '../components/homecard.vue'
 </script>
 
 <template>
@@ -17,7 +18,7 @@
 				Lawn mowers, snow blowers, generators, and more.
 			</p>
 
-			<a href="#contact" class="btn btn-primary btn-lg mt-3">
+			<a href="/contact" class="btn btn-primary btn-lg mt-3">
 				Request Service
 			</a>
 		</div>
@@ -37,38 +38,26 @@
 
 			<div class="row g-4">
 
-				<div class="col-md-4">
-					<div class="card h-100">
-						<div class="card-body">
-							<h5 class="card-title">Lawn Mowers</h5>
-							<p class="card-text">
-								Diagnosis, repair, tune-ups, and maintenance.
-							</p>
-						</div>
-					</div>
-				</div>
+				<homecard
+					title="Lawn Mowers"
+					body="Diagnosis, repair, tune-ups, and maintenance."
+					image="lawnmower.png"
+					alt="Lawn mower cutting grass"
+				/>
 
-				<div class="col-md-4">
-					<div class="card h-100">
-						<div class="card-body">
-							<h5 class="card-title">Snow Blowers</h5>
-							<p class="card-text">
-								Get your equipment ready before winter hits.
-							</p>
-						</div>
-					</div>
-				</div>
+				<homecard
+					title="Snow Blowers"
+					body="Get your equipment ready before winter hits."
+					image="snowblower.png"
+					alt="Snow blower clearing driveway"
+				/>
 
-				<div class="col-md-4">
-					<div class="card h-100">
-						<div class="card-body">
-							<h5 class="card-title">Other Equipment</h5>
-							<p class="card-text">
-								Generators, pressure washers, tillers, and more.
-							</p>
-						</div>
-					</div>
-				</div>
+				<homecard
+					title="Other Equipment"
+					body="Generators, pressure washers, tillers, and more."
+					image="pressurewasher.png"
+					alt="Pressure washer cleaning driveway"
+				/>
 
 			</div>
 		</div>
@@ -108,11 +97,12 @@
 				Contact us to schedule service.
 			</p>
 
-			<button class="btn btn-primary btn-lg">
+			<a href="/contact" class="btn btn-primary btn-lg mt-3">
 				Contact Us
-			</button>
+			</a>
 
 		</div>
 	</section>
 	</main>
 </template>
+
