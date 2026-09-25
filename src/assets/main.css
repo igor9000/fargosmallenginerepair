@@ -19,3 +19,12 @@ body {
   --bs-btn-hover-color: #fff;
   --bs-btn-active-color: #fff;
 }
+
+.btn-outline-primary {
+  --bs-btn-color: #ce2027;
+  --bs-btn-border-color: #ce2027;
+
+  --bs-btn-hover-bg: #ce2027;
+  --bs-btn-hover-border-color: #ce2027;
+  --bs-btn-hover-color: #fff;
+}

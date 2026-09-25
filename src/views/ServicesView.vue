@@ -1,8 +1,8 @@
 <template>
 	<main>
 		<section id="services" class="py-5">
-    		<div class="container">
-				<div class="contact">
+			<div class="container">
+				<div class="services">
 					<h1>Small Engine Repair Services</h1>
 					<div>
 						Whether your mower won’t start, your snowblower is running rough, or your equipment just needs routine maintenance, Fargo Small Engine Repair can help get it back in working order.
