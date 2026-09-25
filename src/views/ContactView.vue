@@ -17,7 +17,7 @@ meta: [
 <template>
 	<main>
 		<section class="py-5">
-			<div class="container">
+			<div class="container text-center">
 				<div class="mx-auto p-5">
 
 					<h1 class="fw-bold mb-3">
@@ -32,7 +32,7 @@ meta: [
 						(701) 491-8696
 					</h2>
 
-					<div class="d-flex gap-3 flex-wrap">
+					<div class="d-flex gap-3 flex-wrap justify-content-center">
 						<a
 							href="tel:+17014918696"
 							class="btn btn-primary btn-lg"
