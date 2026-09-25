@@ -1,3 +1,19 @@
+<script setup>
+import { useHead } from '@unhead/vue'
+
+useHead({
+	title: 'About | Fargo Small Engine Repair',
+
+	meta: [
+		{
+			name: 'description',
+			content:
+				'Learn about Fargo Small Engine Repair, a veteran-owned local business focused on reliable repairs, superior service, and keeping good equipment running.'
+		}
+	]
+})
+</script>
+
 <template>
 	<main>
 <!-- Hero -->

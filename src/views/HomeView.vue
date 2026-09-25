@@ -1,5 +1,18 @@
 <script setup>
-	import homecard from '../components/homecard.vue'
+import homecard from '../components/homecard.vue'
+import { useHead } from '@unhead/vue'
+
+useHead({
+	title: 'Small Engine Repair Services | Fargo Small Engine Repair',
+
+	meta: [
+		{
+			name: 'description',
+			content:
+				'Lawn mower, snow blower, pressure washer, and small engine repair services in Fargo, ND.'
+		}
+	]
+})
 </script>
 
 <template>

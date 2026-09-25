@@ -1,3 +1,19 @@
+<script setup>
+import { useHead } from '@unhead/vue'
+
+useHead({
+	title: 'Small Engine Repair Services in Fargo, ND | Fargo Small Engine Repair',
+
+	meta: [
+		{
+			name: 'description',
+			content:
+				'Lawn mower, snow blower, pressure washer, and other small engine repair and maintenance services in Fargo, ND.'
+		}
+	]
+})
+</script>
+
 <template>
 	<main>
 		<section id="services" class="py-5">
