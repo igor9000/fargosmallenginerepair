@@ -30,12 +30,28 @@ useHead({
 		<!-- Story -->
 		<section class="py-5">
 			<div class="container">
-				<div class="row justify-content-center">
-					<div class="col-lg-8">
+				<div class="row justify-content-center align-items-center g-5">
+					<div class="col-lg-4">
 
 						<p class="lead">
 							I’m Adam, a U.S. Army veteran and the owner of Fargo Small Engine Repair. I’ve had an interest in figuring out how things work for as long as I can remember, and this business gives me the opportunity to put that experience to work helping others.
 						</p>
+					</div>
+					<div class="col-md-8 col-lg-4">
+						<img
+							src="/owner.jpg"
+							alt="Adam, owner of Fargo Small Engine Repair, in his workshop"
+							width="3392"
+							height="2544"
+							class="img-fluid rounded shadow-sm about-photo mb-5"
+						/>
+					</div>
+				</div>
+
+				<div class="row justify-content-center align-items-center g-5">
+
+
+					<div class="col-lg-8">
 
 						<p>
 							That interest started in the 1990s in my grandfather’s garage.
@@ -85,4 +101,9 @@ useHead({
 </template>
 
 <style>
+.about-photo {
+	width: 100%;
+	aspect-ratio: 4 / 3;
+	object-fit: cover;
+}
 </style>
