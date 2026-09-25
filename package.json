@@ -11,7 +11,8 @@
     "test:e2e": "playwright test",
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
-    "lint:eslint": "eslint . --fix --cache"
+    "lint:eslint": "eslint . --fix --cache",
+    "start": "node server.cjs"
   },
   "dependencies": {
     "pinia": "^4.0.3",
