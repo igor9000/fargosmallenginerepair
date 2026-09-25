@@ -1,5 +1,6 @@
 <script setup>
 import { useHead } from '@unhead/vue'
+import servicescard from '../components/services-card.vue'
 
 useHead({
 	title: 'Small Engine Repair Services in Fargo, ND | Fargo Small Engine Repair',
@@ -44,100 +45,48 @@ useHead({
 			<div class="container">
 
 				<div class="row g-4">
+					<servicescard
+						title="Lawn Mower Repair"
+						body="Push mowers, self-propelled mowers, and other lawn equipment can develop starting problems, poor performance, fuel issues, and other mechanical problems over time. We diagnose the problem and make the repairs needed to get you mowing again."
+						image="lawnmower.jpg"
+						alt="Lawn mower repair"
+					/>
 
-					<div class="col-md-6">
-						<div class="card service-card h-100">
-							<div class="card-body p-4">
-								<h2 class="h3">Lawn Mower Repair</h2>
+					<servicescard
+						title="Snow Blower Repair"
+						body="Don’t wait until the first major snowfall to find out your snowblower isn’t ready. We service and repair snowblowers with starting issues, fuel-system problems, poor running conditions, drive problems, and more."
+						image="snowblower.jpg"
+						alt="Snow blower repair"
+					/>
 
-								<p class="mb-0">
-									Push mowers, self-propelled mowers, and other lawn equipment
-									can develop starting problems, poor performance, fuel issues,
-									and other mechanical problems over time. We diagnose the problem
-									and make the repairs needed to get you mowing again.
-								</p>
-							</div>
-						</div>
-					</div>
+					<servicescard
+						title="Tune-Ups &amp; Maintenance"
+						body="Routine maintenance helps your equipment start easier, run better, and last longer. Services may include oil changes, spark plugs, air filters, fuel-system service, blade inspection, and general equipment checks."
+						image="tuneup.jpg"
+						alt="Tune-Ups & Maintenance"
+					/>
 
+					<servicescard style="object-position: center -100px"
+						title="Fuel &amp; Carburetor Problems"
+						body="Old fuel and dirty carburetors are some of the most common causes of small-engine problems. If your equipment won’t start, only runs with the choke on, surges, stalls, or runs poorly, we can diagnose and repair the fuel system."
+						image="carburetor.jpg"
+						alt="Fuel & Carburetor Problems"
+					/>
 
-					<div class="col-md-6">
-						<div class="card service-card h-100">
-							<div class="card-body p-4">
-								<h2 class="h3">Snowblower Repair</h2>
+					<servicescard
+						title="Engine Diagnostics &amp; Repair"
+						body="Sometimes the problem isn’t obvious. We troubleshoot starting, ignition, compression, fuel, and mechanical issues to determine what’s actually wrong before replacing parts unnecessarily."
+						image="diagnostic.jpg"
+						alt="Engine Diagnostics & Repair"
+						style="object-position: center -100px"
+					/>
 
-								<p class="mb-0">
-									Don’t wait until the first major snowfall to find out your
-									snowblower isn’t ready. We service and repair snowblowers with
-									starting issues, fuel-system problems, poor running conditions,
-									drive problems, and more.
-								</p>
-							</div>
-						</div>
-					</div>
-
-
-					<div class="col-md-6">
-						<div class="card service-card h-100">
-							<div class="card-body p-4">
-								<h2 class="h3">Tune-Ups &amp; Maintenance</h2>
-
-								<p class="mb-0">
-									Routine maintenance helps your equipment start easier, run better,
-									and last longer. Services may include oil changes, spark plugs,
-									air filters, fuel-system service, blade inspection, and general
-									equipment checks.
-								</p>
-							</div>
-						</div>
-					</div>
-
-
-					<div class="col-md-6">
-						<div class="card service-card h-100">
-							<div class="card-body p-4">
-								<h2 class="h3">Fuel &amp; Carburetor Problems</h2>
-
-								<p class="mb-0">
-									Old fuel and dirty carburetors are some of the most common causes
-									of small-engine problems. If your equipment won’t start, only runs
-									with the choke on, surges, stalls, or runs poorly, we can diagnose
-									and repair the fuel system.
-								</p>
-							</div>
-						</div>
-					</div>
-
-
-					<div class="col-md-6">
-						<div class="card service-card h-100">
-							<div class="card-body p-4">
-								<h2 class="h3">Engine Diagnostics &amp; Repair</h2>
-
-								<p class="mb-0">
-									Sometimes the problem isn’t obvious. We troubleshoot starting,
-									ignition, compression, fuel, and mechanical issues to determine
-									what’s actually wrong before replacing parts unnecessarily.
-								</p>
-							</div>
-						</div>
-					</div>
-
-
-					<div class="col-md-6">
-						<div class="card service-card h-100">
-							<div class="card-body p-4">
-								<h2 class="h3">Other Outdoor Power Equipment</h2>
-
-								<p class="mb-0">
-									We also work on a variety of other small-engine equipment,
-									including generators, pressure washers, tillers, and similar
-									equipment.
-								</p>
-							</div>
-						</div>
-					</div>
-
+					<servicescard
+						title="Other Outdoor Power Equipment"
+						body="We also work on a variety of other small-engine equipment, including generators, pressure washers, tillers, and similar equipment."
+						image="other-equipment.jpg"
+						alt="Other Outdoor Power Equipment"
+					/>
 				</div>
 			</div>
 		</section>
