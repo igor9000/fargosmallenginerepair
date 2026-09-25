@@ -1,0 +1,21 @@
+body {
+  font-family: Aptos, Arial, sans-serif;
+}
+
+.btn-primary {
+  --bs-btn-bg: #ce2027;
+  --bs-btn-border-color: #ce2027;
+
+  --bs-btn-hover-bg: #ae1b21;
+  --bs-btn-hover-border-color: #a51a20;
+
+  --bs-btn-active-bg: #94171c;
+  --bs-btn-active-border-color: #8b151a;
+
+  --bs-btn-disabled-bg: #ce2027;
+  --bs-btn-disabled-border-color: #ce2027;
+
+  --bs-btn-color: #fff;
+  --bs-btn-hover-color: #fff;
+  --bs-btn-active-color: #fff;
+}
