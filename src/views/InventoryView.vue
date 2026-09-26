@@ -162,6 +162,21 @@ onMounted(async () => {
 							</div>
 						</div>
 					</section>
+										<!-- Free delivery banner -->
+					<section
+						v-else
+						class="delivery-banner py-3 mb-5"
+					>
+						<div class="container text-center">
+							<div class="fw-bold fs-5">
+								{{showDeliveryBanner}}
+							</div>
+
+							<div class="small">
+								{{index}}
+							</div>
+						</div>
+					</section>
 				</div>
 
 			</div>
