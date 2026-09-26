@@ -113,6 +113,14 @@ onMounted(async () => {
 								class="col-md-6 col-lg-4"
 							>
 								<div class="card h-100 shadow-sm">
+
+									<img
+										v-if="item.image_url"
+										:src="item.image_url"
+										:alt="item.name"
+										class="card-img-top inventory-image"
+									>
+
 									<div class="card-body d-flex flex-column">
 
 										<h3 class="h5 card-title fw-bold">
@@ -186,5 +194,9 @@ onMounted(async () => {
 <style scoped>
 .inventory-description {
 	white-space: pre-line;
+}
+.inventory-image {
+	height: 250px;
+	object-fit: cover;
 }
 </style>
