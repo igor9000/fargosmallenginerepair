@@ -81,20 +81,26 @@ onMounted(async () => {
 
 
 		<!-- Inventory -->
-		<section class="py-5">
+
+		<section v-if="loading" class="py-5">
 			<div class="container">
+				<p>Loading...</p>
+			</div>
+		</section>
 
-				<p v-if="loading">Loading...</p>
+		<section v-else-if="error" class="py-5">
+			<div class="container">
+				<p>{{ error }}</p>
+			</div>
+		</section>
 
-				<p v-else-if="error">
-					{{ error }}
-				</p>
-
-				<div v-else>
-					<template
-						v-for="(type, index) in inventoryByType"
-						:key="type.id"
-					>
+		<template v-else>
+			<template
+				v-for="(type, index) in inventoryByType"
+				:key="type.id"
+			>
+				<section class="py-5">
+					<div class="container">
 						<section class="mb-5">
 							<div class="mb-4">
 								<h2 class="fw-bold mb-2">
@@ -162,11 +168,10 @@ onMounted(async () => {
 								</div>
 							</div>
 						</section>
-					</template>
-				</div>
-
-			</div>
-		</section>
+					</div>
+				</section>
+			</template>
+		</template>
 
 
 		<!-- CTA -->
