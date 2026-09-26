@@ -1,6 +1,6 @@
 <script setup>
 import { useHead } from '@unhead/vue'
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 useHead({
 	title: 'Small Engine Repair Services in Fargo, ND | Fargo Small Engine Repair',
@@ -13,6 +13,27 @@ useHead({
 		}
 	]
 });
+
+const inventoryByType = computed(() => {
+	const groups = new Map();
+
+	for (const item of inventory.value) {
+		if (!groups.has(item.type_id)) {
+			groups.set(item.type_id, {
+				id: item.type_id,
+				name: item.type_name,
+				description: item.type_description,
+				items: []
+			});
+		}
+
+		groups.get(item.type_id).items.push(item);
+	}
+
+	return Array.from(groups.values());
+});
+
+
 
 const inventory = ref([])
 const loading = ref(true)
@@ -33,7 +54,7 @@ onMounted(async () => {
 	} finally {
 		loading.value = false
 	}
-})
+});
 </script>
 
 <template>
@@ -59,25 +80,66 @@ onMounted(async () => {
 		</section>
 
 
-		<!-- Services -->
+		<!-- Inventory -->
 		<section class="py-5">
 			<div class="container">
 
-				<div class="row g-4">
-					<div>
-						<p v-if="loading">Loading...</p>
-						<p v-else-if="error">{{ error }}</p>
+				<p v-if="loading">Loading...</p>
 
-						<div v-else>
+				<p v-else-if="error">
+					{{ error }}
+				</p>
+
+				<div v-else>
+					<section
+						v-for="type in inventoryByType"
+						:key="type.id"
+						class="mb-5"
+					>
+						<div class="mb-4">
+							<h2 class="fw-bold mb-2">
+								{{ type.name }}
+							</h2>
+
+							<p class="lead text-muted mb-0">
+								{{ type.description }}
+							</p>
+						</div>
+
+						<div class="row g-4">
 							<div
-								v-for="item in inventory"
+								v-for="item in type.items"
 								:key="item.id"
+								class="col-md-6 col-lg-4"
 							>
-								{{ item.name }}
+								<div class="card h-100 shadow-sm">
+									<div class="card-body d-flex flex-column">
+
+										<h3 class="h5 card-title fw-bold">
+											{{ item.name }}
+										</h3>
+
+										<p class="text-muted small mb-2">
+											SKU: {{ item.sku }}
+										</p>
+
+										<p class="card-text inventory-description">
+											{{ item.description }}
+										</p>
+
+										<div class="mt-auto pt-3">
+											<div class="fs-4 fw-bold">
+												${{ Number(item.price).toFixed(2) }}
+											</div>
+										</div>
+
+									</div>
+								</div>
 							</div>
 						</div>
-					</div>
+					</section>
 				</div>
+
 			</div>
 		</section>
 
@@ -122,4 +184,7 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.inventory-description {
+	white-space: pre-line;
+}
 </style>

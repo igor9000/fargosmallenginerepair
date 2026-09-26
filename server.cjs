@@ -99,16 +99,28 @@ ${message}`
 
 
 // inventory api thing
-app.get("/api/inventory", async (req, res) => {
+app.get('/api/inventory', async (req, res) => {
 	try {
-		const [rows] = await db.query("SELECT * FROM inventory");
+		const [rows] = await db.query(`
+			SELECT
+				i.id,
+				i.sku,
+				i.name,
+				i.description,
+				i.price,
+				it.id AS type_id,
+				it.name AS type_name,
+				it.description AS type_description
+			FROM inventory i
+			INNER JOIN inventory_types it
+				ON i.inventory_type_id = it.id
+			ORDER BY it.name, i.name
+		`);
+
 		res.json(rows);
 	} catch (error) {
-		console.error("Inventory database error:", error);
-
-		res.status(500).json({
-			error: "Unable to load inventory"
-		});
+		console.error('Inventory database error:', error);
+		res.status(500).json({ error: 'Unable to load inventory' });
 	}
 });
 
