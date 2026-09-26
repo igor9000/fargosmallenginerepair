@@ -76,25 +76,6 @@ useHead({
 		</div>
 	</section>
 
-
-	<!-- About -->
-	<section id="about" class="bg-light py-5">
-		<div class="container">
-			<div class="row align-items-center">
-
-				<div class="col-lg-12">
-					<h2>About Fargo Small Engine Repair</h2>
-
-					<p>
-						Local small engine repair with superior service, honest diagnostics, and quality workmanship.
-					</p>
-				</div>
-
-			</div>
-		</div>
-	</section>
-
-
 	<!-- Call to Action -->
 	<section id="contact" class="py-5">
 		<div class="container text-center">
