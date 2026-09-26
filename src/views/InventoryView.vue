@@ -152,23 +152,22 @@ onMounted(async () => {
 								</div>
 							</div>
 						</section>
-
-						<!-- Free delivery banner -->
-						<section
-							v-if="showDeliveryBanner && index === 0"
-							class="delivery-banner py-3 mb-5"
-						>
-							<div class="container text-center">
-								<div class="fw-bold fs-5">
-									🚚 FREE DELIVERY IN FARGO–MOORHEAD
-								</div>
-
-								<div class="small">
-									Free local delivery with any equipment purchase.
-								</div>
-							</div>
-						</section>
 					</div>
+					<!-- Free delivery banner -->
+					<section
+						v-if="showDeliveryBanner && index === 0"
+						class="delivery-banner py-3 mb-5"
+					>
+						<div class="container text-center">
+							<div class="fw-bold fs-5">
+								🚚 FREE DELIVERY IN FARGO–MOORHEAD
+							</div>
+
+							<div class="small">
+								Free local delivery with any equipment purchase.
+							</div>
+						</div>
+					</section>
 				</section>
 			</template>
 		</template>
