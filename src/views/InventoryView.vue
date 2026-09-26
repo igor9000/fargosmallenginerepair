@@ -116,7 +116,7 @@ onMounted(async () => {
 
 								<img
 									v-if="item.image_url"
-									:src="`/images/inventory/${item.sku}/${item.image_url}`"
+									:src="`/inventory-images/${item.sku}/${item.image_url}`"
 									:alt="item.name"
 									class="card-img-top inventory-image"
 								>
