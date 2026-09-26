@@ -1,76 +1,96 @@
 const express = require("express");
 const path = require("path");
-const nodemailer = require("nodemailer");
 
 const app = express();
 
 const port = process.env.PORT || 3000;
 const dist = path.join(__dirname, "dist");
 
-// Allow JSON request bodies from your Vue contact form
 app.use(express.json());
 
-// Contact form API
-		console.log("SMTP config:", {
-			host: process.env.SMTP_HOST,
-			user: process.env.SMTP_USER,
-			passwordConfigured: !!process.env.SMTP_PASSWORD
-		});
+async function sendEmail({ to, replyTo, subject, text }) {
+  const response = await fetch(
+    "http://127.0.0.1:2525/api/email/send",
+    {
+      method: "POST",
+      headers: {
+        "content-type": "application/json"
+      },
+      body: JSON.stringify({
+        to: [to],
+        replyTo,
+        subject,
+        text
+      }),
+      signal: AbortSignal.timeout(30000)
+    }
+  );
+
+  let result;
+
+  try {
+    result = await response.json();
+  } catch {
+    throw new Error(`Email gateway returned HTTP ${response.status}`);
+  }
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || `Email gateway returned HTTP ${response.status}`);
+  }
+
+  return result;
+}
+
 app.post("/api/contact", async (req, res) => {
-	const { name, email, message } = req.body;
+  const { name, email, message } = req.body;
 
-	if (!name || !email || !message) {
-		return res.status(400).json({ error: "Missing fields" });
-	}
+  if (!name || !email || !message) {
+    return res.status(400).json({
+      error: "Missing required fields"
+    });
+  }
 
-	try {
-		console.log("SMTP config:", {
-			host: process.env.SMTP_HOST,
-			user: process.env.SMTP_USER,
-			passwordConfigured: !!process.env.SMTP_PASSWORD
-		});
-		const transporter = nodemailer.createTransport({
-			host: process.env.SMTP_HOST,
-			port: 587,
-			secure: false,
-			auth: {
-				user: process.env.SMTP_USER,
-				pass: process.env.SMTP_PASSWORD
-			}
-		});
+  const recipient = process.env.CONTACT_FORM_RECIPIENT_EMAIL;
 
-		await transporter.sendMail({
-			from: process.env.SMTP_USER,
-			to: "adam@fargosmallenginerepair.com",
-			replyTo: email,
-			subject: `Website contact from ${name}`,
-			text: `
-Name: ${name}
+  if (!recipient) {
+    console.error("CONTACT_FORM_RECIPIENT_EMAIL is not configured");
+
+    return res.status(500).json({
+      error: "Email recipient not configured"
+    });
+  }
+
+  try {
+    const result = await sendEmail({
+      to: recipient,
+      replyTo: email,
+      subject: `Website contact from ${name}`,
+      text: `Name: ${name}
 Email: ${email}
 
-${message}
-			`
-		});
+${message}`
+    });
 
-		res.json({ success: true });
-	} catch (error) {
-		console.error("Contact form email error:", error);
+    console.log("Contact form email sent:", result.messageId);
 
-		res.status(500).json({
-			error: "Unable to send email"
-		});
-	}
+    res.json({
+      success: true
+    });
+  } catch (error) {
+    console.error("Contact form email error:", error);
+
+    res.status(500).json({
+      error: "Unable to send email"
+    });
+  }
 });
 
-// Serve the built Vue site
 app.use(express.static(dist));
 
-// Vue Router fallback
-// IMPORTANT: this stays AFTER /api/contact
 app.use((req, res) => {
-	res.sendFile(path.join(dist, "index.html"));
+  res.sendFile(path.join(dist, "index.html"));
 });
 
 app.listen(port, "0.0.0.0", () => {
-	console.log(`Server listening on ${port}`);
+  console.log(`Server listening on ${port}`);
 });
