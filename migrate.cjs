@@ -12,7 +12,7 @@ const db = knex({
 	},
 
 	migrations: {
-		directory: path.join(__dirname, 'migrations'),
+		directory: '/src/db-migrations',
 		extension: 'cjs'
 	}
 });
