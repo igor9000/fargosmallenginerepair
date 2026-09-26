@@ -91,92 +91,78 @@ onMounted(async () => {
 				</p>
 
 				<div v-else>
-					<section
+					<template
 						v-for="(type, index) in inventoryByType"
 						:key="type.id"
-						class="mb-5"
 					>
-						<div class="mb-4">
-							<h2 class="fw-bold mb-2">
-								{{ type.name }}
-							</h2>
+						<section class="mb-5">
+							<div class="mb-4">
+								<h2 class="fw-bold mb-2">
+									{{ type.name }}
+								</h2>
 
-							<p class="lead text-muted mb-0">
-								{{ type.description }}
-							</p>
-						</div>
+								<p class="lead text-muted mb-0">
+									{{ type.description }}
+								</p>
+							</div>
 
-						<div class="row g-4">
-							<div
-								v-for="item in type.items"
-								:key="item.id"
-								class="col-md-6 col-lg-4"
-							>
-								<div class="card h-100 shadow-sm">
-
-								<img
-									v-if="item.image_url"
-									:src="`/inventory-images/${item.sku}/${item.image_url}`"
-									:alt="item.name"
-									class="card-img-top inventory-image"
+							<div class="row g-4">
+								<div
+									v-for="item in type.items"
+									:key="item.id"
+									class="col-md-6 col-lg-4"
 								>
+									<div class="card h-100 shadow-sm">
 
-									<div class="card-body d-flex flex-column">
+									<img
+										v-if="item.image_url"
+										:src="`/inventory-images/${item.sku}/${item.image_url}`"
+										:alt="item.name"
+										class="card-img-top inventory-image"
+									>
 
-										<h3 class="h5 card-title fw-bold">
-											{{ item.name }}
-										</h3>
+										<div class="card-body d-flex flex-column">
 
-										<p class="text-muted small mb-2">
-											SKU: {{ item.sku }}
-										</p>
+											<h3 class="h5 card-title fw-bold">
+												{{ item.name }}
+											</h3>
 
-										<p class="card-text inventory-description">
-											{{ item.description }}
-										</p>
+											<p class="text-muted small mb-2">
+												SKU: {{ item.sku }}
+											</p>
 
-										<div class="mt-auto pt-3">
-											<div class="fs-4 fw-bold">
-												${{ Number(item.price).toFixed(2) }}
+											<p class="card-text inventory-description">
+												{{ item.description }}
+											</p>
+
+											<div class="mt-auto pt-3">
+												<div class="fs-4 fw-bold">
+													${{ Number(item.price).toFixed(2) }}
+												</div>
 											</div>
-										</div>
 
+										</div>
 									</div>
 								</div>
 							</div>
-						</div>
-					</section>
+						</section>
 
-					<!-- Free delivery banner -->
-					<section
-						v-if="showDeliveryBanner && index === 0"
-						class="delivery-banner py-3 mb-5"
-					>
-						<div class="container text-center">
-							<div class="fw-bold fs-5">
-								🚚 FREE DELIVERY IN FARGO–MOORHEAD
-							</div>
+						<!-- Free delivery banner -->
+						<section
+							v-if="showDeliveryBanner && index === 0"
+							class="delivery-banner py-3 mb-5"
+						>
+							<div class="container text-center">
+								<div class="fw-bold fs-5">
+									🚚 FREE DELIVERY IN FARGO–MOORHEAD
+								</div>
 
-							<div class="small">
-								Free local delivery with any equipment purchase.
+								<div class="small">
+									Free local delivery with any equipment purchase.
+								</div>
 							</div>
-						</div>
-					</section>
-										<!-- Free delivery banner -->
-					<section
-						v-else
-						class="delivery-banner py-3 mb-5"
-					>
-						<div class="container text-center">
-							<div class="fw-bold fs-5">
-								{{showDeliveryBanner}}
-							</div>
-
-							<div class="small">
-								{{index}}
-							</div>
-						</div>
-					</section>
+						</section>
+					</template>
 				</div>
 
 			</div>
