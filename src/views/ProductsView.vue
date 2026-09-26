@@ -1,5 +1,6 @@
 <script setup>
 import { useHead } from '@unhead/vue'
+import { ref, onMounted } from 'vue'
 
 useHead({
 	title: 'Small Engine Repair Services in Fargo, ND | Fargo Small Engine Repair',
@@ -11,6 +12,27 @@ useHead({
 				'Lawn mower, snow blower, pressure washer, and other small engine repair and maintenance services in Fargo, ND.'
 		}
 	]
+});
+
+const products = ref([])
+const loading = ref(true)
+const error = ref(null)
+
+onMounted(async () => {
+  try {
+    const response = await fetch('/api/products')
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`)
+    }
+
+    products.value = await response.json()
+  } catch (err) {
+    console.error(err)
+    error.value = 'Unable to load products'
+  } finally {
+    loading.value = false
+  }
 })
 </script>
 
@@ -42,7 +64,19 @@ useHead({
 			<div class="container">
 
 				<div class="row g-4">
-					
+					<div>
+						<p v-if="loading">Loading...</p>
+						<p v-else-if="error">{{ error }}</p>
+
+						<div v-else>
+							<div
+								v-for="product in products"
+								:key="product.id"
+							>
+								{{ product.name }}
+							</div>
+						</div>
+					</div>
 				</div>
 			</div>
 		</section>
