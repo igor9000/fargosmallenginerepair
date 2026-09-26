@@ -34,7 +34,7 @@ const inventoryByType = computed(() => {
 });
 
 
-
+const showDeliveryBanner = false;
 const inventory = ref([])
 const loading = ref(true)
 const error = ref(null)
@@ -71,7 +71,7 @@ onMounted(async () => {
 						</h1>
 
 						<p class="lead text-muted mb-0">
-							This is where I'd put my inventory list.... IF I HAD ONE!
+							Quality used equipment without the new equipment price tag.
 						</p>
 
 					</div>
@@ -92,7 +92,7 @@ onMounted(async () => {
 
 				<div v-else>
 					<section
-						v-for="type in inventoryByType"
+						v-for="(type, index) in inventoryByType"
 						:key="type.id"
 						class="mb-5"
 					>
@@ -143,6 +143,22 @@ onMounted(async () => {
 
 									</div>
 								</div>
+							</div>
+						</div>
+					</section>
+
+					<!-- Free delivery banner -->
+					<section
+						v-if="showDeliveryBanner && index === 0"
+						class="delivery-banner py-3 mb-5"
+					>
+						<div class="container text-center">
+							<div class="fw-bold fs-5">
+								🚚 FREE DELIVERY IN FARGO–MOORHEAD
+							</div>
+
+							<div class="small">
+								Free local delivery with any equipment purchase.
 							</div>
 						</div>
 					</section>
@@ -198,5 +214,10 @@ onMounted(async () => {
 .inventory-image {
 	height: 350px;
 	object-fit: cover;
+}
+.delivery-banner {
+	background: #ffc107;
+	color: #212529;
+	border-bottom: 1px solid rgba(0, 0, 0, 0.15);
 }
 </style>
