@@ -12,12 +12,16 @@
     "lint": "run-s \"lint:*\"",
     "lint:oxlint": "oxlint . --fix",
     "lint:eslint": "eslint . --fix --cache",
-    "start": "node server.cjs"
+    "migrate": "node migrate.cjs",
+    "start": "node server.cjs",
+    "prestart": "node migrate.cjs"
   },
   "dependencies": {
     "@unhead/vue": "^3.4.1",
     "bootstrap": "^5.3.8",
     "express": "^5.2.1",
+    "knex": "^3.3.0",
+    "migrate": "^2.1.0",
     "mysql2": "^3.24.4",
     "pinia": "^4.0.3",
     "vue": "^3.5.42",
