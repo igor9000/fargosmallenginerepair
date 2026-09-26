@@ -34,7 +34,7 @@ const inventoryByType = computed(() => {
 });
 
 
-const showDeliveryBanner = false;
+const showDeliveryBanner = true;
 const inventory = ref([])
 const loading = ref(true)
 const error = ref(null)
