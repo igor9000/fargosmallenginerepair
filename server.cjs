@@ -11,6 +11,11 @@ const dist = path.join(__dirname, "dist");
 app.use(express.json());
 
 // Contact form API
+		console.log("SMTP config:", {
+			host: process.env.SMTP_HOST,
+			user: process.env.SMTP_USER,
+			passwordConfigured: !!process.env.SMTP_PASSWORD
+		});
 app.post("/api/contact", async (req, res) => {
 	const { name, email, message } = req.body;
 
