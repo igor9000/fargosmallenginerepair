@@ -6,3 +6,9 @@ exports.up = async function(knex) {
 		price: 300.00
 	});
 };
+
+exports.down = async function(knex) {
+	await knex('products')
+		.where({ sku: 'MY-0012' })
+		.del();
+};
