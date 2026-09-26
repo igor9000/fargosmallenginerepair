@@ -98,16 +98,16 @@ ${message}`
 
 
 
-// product api thing
-app.get("/api/products", async (req, res) => {
+// inventory api thing
+app.get("/api/inventory", async (req, res) => {
 	try {
-		const [rows] = await db.query("SELECT * FROM products");
+		const [rows] = await db.query("SELECT * FROM inventory");
 		res.json(rows);
 	} catch (error) {
-		console.error("Product database error:", error);
+		console.error("Inventory database error:", error);
 
 		res.status(500).json({
-			error: "Unable to load products"
+			error: "Unable to load inventory"
 		});
 	}
 });

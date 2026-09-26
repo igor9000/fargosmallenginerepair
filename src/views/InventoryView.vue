@@ -14,25 +14,25 @@ useHead({
 	]
 });
 
-const products = ref([])
+const inventory = ref([])
 const loading = ref(true)
 const error = ref(null)
 
 onMounted(async () => {
-  try {
-    const response = await fetch('/api/products')
+	try {
+		const response = await fetch('/api/inventory')
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}`)
-    }
+		if (!response.ok) {
+			throw new Error(`HTTP ${response.status}`)
+		}
 
-    products.value = await response.json()
-  } catch (err) {
-    console.error(err)
-    error.value = 'Unable to load products'
-  } finally {
-    loading.value = false
-  }
+		inventory.value = await response.json()
+	} catch (err) {
+		console.error(err)
+		error.value = 'Unable to load inventory'
+	} finally {
+		loading.value = false
+	}
 })
 </script>
 
@@ -50,7 +50,7 @@ onMounted(async () => {
 						</h1>
 
 						<p class="lead text-muted mb-0">
-							This is where I'd put my product list.... IF I HAD ONE!
+							This is where I'd put my inventory list.... IF I HAD ONE!
 						</p>
 
 					</div>
@@ -70,10 +70,10 @@ onMounted(async () => {
 
 						<div v-else>
 							<div
-								v-for="product in products"
-								:key="product.id"
+								v-for="item in inventory"
+								:key="item.id"
 							>
-								{{ product.name }}
+								{{ item.name }}
 							</div>
 						</div>
 					</div>
