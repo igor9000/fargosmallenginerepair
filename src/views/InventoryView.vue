@@ -1,15 +1,16 @@
 <script setup>
 import { useHead } from '@unhead/vue'
 import { ref, computed, onMounted } from 'vue'
+import inventorycard from '../components/inventory-card.vue'
 
 useHead({
-	title: 'Small Engine Repair Services in Fargo, ND | Fargo Small Engine Repair',
+	title: 'Outdoor Equipment for Sale in Fargo, ND | Fargo Small Engine Repair',
 
 	meta: [
 		{
 			name: 'description',
 			content:
-				'Lawn mower, snow blower, pressure washer, and other small engine repair and maintenance services in Fargo, ND.'
+				'Shop inspected and serviced used outdoor power equipment for sale in Fargo, ND, with a 30-day warranty and free Fargo-Moorhead delivery.'
 		}
 	]
 });
@@ -181,45 +182,7 @@ onMounted(async () => {
 								</p>
 							</div>
 
-							<div class="row g-4">
-								<div
-									v-for="item in type.items"
-									:key="item.id"
-									class="col-md-6 col-lg-4"
-								>
-									<div class="card h-100 shadow-sm">
-
-									<img
-										v-if="item.image_url"
-										:src="`/inventory-images/${item.sku}/${item.image_url}`"
-										:alt="item.name"
-										class="card-img-top inventory-image"
-									>
-
-										<div class="card-body d-flex flex-column">
-
-											<h3 class="h5 card-title fw-bold">
-												{{ item.name }}
-											</h3>
-
-											<p class="text-muted small mb-2">
-												SKU: {{ item.sku }}
-											</p>
-
-											<p class="card-text inventory-description">
-												{{ item.description }}
-											</p>
-
-											<div class="mt-auto pt-3">
-												<div class="fs-4 fw-bold">
-													${{ Number(item.price).toFixed(2) }}
-												</div>
-											</div>
-
-										</div>
-									</div>
-								</div>
-							</div>
+							<inventoryitem item="item" />
 						</section>
 					</div>
 					<!-- Free delivery banner -->
