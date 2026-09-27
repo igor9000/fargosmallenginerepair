@@ -79,8 +79,6 @@ onMounted(async () => {
 			</div>
 		</section>
 
-
-
 		<!-- Inventory -->
 
 		<section v-if="loading" class="py-5">
@@ -170,11 +168,15 @@ onMounted(async () => {
 					<div class="container">
 						<section class="mb-5">
 							<div class="mb-4">
-								<h2 class="fw-bold mb-2">
-									{{ type.name }}
-								</h2>
+								<div class="d-flex align-items-center gap-3">
+									<h2 class="fw-bold mb-0 flex-shrink-0">
+										{{ type.name }}
+									</h2>
 
-								<p class="lead text-muted mb-0">
+									<hr class="flex-grow-1 border-brand-primary border-3 opacity-100 m-0">
+								</div>
+
+								<p class="lead text-muted mt-2 mb-0">
 									{{ type.description }}
 								</p>
 							</div>
@@ -313,5 +315,8 @@ onMounted(async () => {
 	width: 56px;
 	height: 56px;
 	object-fit: contain;
+}
+.border-brand-primary {
+	border-color: var(--fser-brand-primary);
 }
 </style>
