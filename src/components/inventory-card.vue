@@ -1,12 +1,15 @@
 <script setup>
 const props = defineProps({
-	item: Object
+	item: {
+		type: Array,
+		required: true
+	}
 })
 
 </script>
 
 <template>
-		<div>
+<div>
 			<div class="card h-100 shadow-sm inventory-card">
 
 				<img
@@ -21,7 +24,7 @@ const props = defineProps({
 					<!-- Brand / availability -->
 					<div class="d-flex justify-content-between align-items-center mb-3">
 						<img
-							v-if="item.brand_logo_url"
+							v-if="item.brand_logo"
 							:src="`/images/brands/${item.brand_logo}`"
 							:alt="item.brand_name"
 							class="brand-logo"
@@ -34,24 +37,31 @@ const props = defineProps({
 
 					<hr class="mt-0 mb-3">
 
-					<h3 class="h5 card-title fw-bold mb-1">
-						{{ item.name }}
-					</h3>
+					<div class="row align-items-start">
+						<div class="col lh-1">
+							<h5 class="h5 card-title fw-bold">
+								{{ item.name }}
+							</h5>
 
-					<p class="text-muted small mb-3">
-						SKU: {{ item.sku }}
-					</p>
+							<p class="text-muted small">
+								SKU: {{ item.sku }}
+							</p>
+						</div>
+						<div class="col-auto fs-4 fw-bold lh-1 d-flex align-items-center gap-2">
+							<img
+								src="/images/icons/pricetag.png"
+								alt=""
+								class="pricetag"
+							/>
+							<span>${{ Number(item.price).toFixed(2) }}</span>
+						</div>
+					</div>
 
 					<p class="card-text inventory-description">
 						{{ item.description }}
 					</p>
 
 					<div class="mt-auto pt-3">
-
-						<div class="fs-4 fw-bold mb-3">
-							${{ Number(item.price).toFixed(2) }}
-						</div>
-
 						<div class="d-flex">
 							<RouterLink
 								:to="{
@@ -62,7 +72,7 @@ const props = defineProps({
 								}"
 								class="btn btn-primary flex-fill"
 							>
-								Schedule Viewing
+								More Details
 							</RouterLink>
 
 						</div>
@@ -94,5 +104,10 @@ const props = defineProps({
 
 .inventory-description {
 	white-space: pre-line;
+}
+.pricetag {
+	width: 1em;
+	height: 1em;
+	object-fit: contain;
 }
 </style>
