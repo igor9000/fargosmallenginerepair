@@ -123,7 +123,7 @@ app.get('/api/inventory', async (req, res) => {
 			LEFT JOIN brands b
 				ON i.brand_id = b.id
 			WHERE i.active = 1
-			ORDER BY it.name, i.name
+			ORDER BY it.name, i.price DESC
 		`);
 
 		res.json(rows);
