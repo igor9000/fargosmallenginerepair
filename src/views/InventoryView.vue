@@ -80,6 +80,7 @@ onMounted(async () => {
 		</section>
 
 
+
 		<!-- Inventory -->
 
 		<section v-if="loading" class="py-5">
@@ -99,6 +100,72 @@ onMounted(async () => {
 				v-for="(type, index) in inventoryByType"
 				:key="type.id"
 			>
+
+				<!-- Inspection / Service & Warranty -->
+				<section class="py-4">
+					<div class="container">
+						<div class="bg-light border rounded-3 p-4 shadow-sm">
+							<div class="row align-items-start g-4">
+
+								<!-- Inspection / Service -->
+								<div class="col-md-7 border-end-md">
+									<div class="d-flex align-items-start gap-3">
+
+										<div class="feature-icon">
+											<img
+												src="/images/icons/checklist.png"
+												alt=""
+											>
+										</div>
+
+										<div>
+											<h2 class="h4 fw-bold mb-2">
+												Inspected. Serviced. Ready to Work.
+											</h2>
+
+											<p class="text-muted mb-0">
+												Every machine goes through a full inspection and service before it’s listed for sale. This always includes an oil change, a new spark plug, and a carburetor cleaning. Wear items and safety components are also checked, and anything that needs attention is addressed before the machine is listed.
+											</p>
+										</div>
+
+									</div>
+								</div>
+
+
+								<!-- Warranty -->
+								<div class="col-md-5">
+									<div class="ps-md-4">
+										<div class="d-flex align-items-start gap-3">
+
+											<div class="feature-icon">
+												<img
+													src="/images/icons/warranty.png"
+													alt=""
+												>
+											</div>
+
+											<div>
+												<h2 class="h4 fw-bold mb-1">
+													30-Day Warranty
+												</h2>
+
+												<p class="text-muted mb-0">
+													Every equipment purchase includes a 30-day warranty for added peace of mind. If something we serviced or repaired gives you trouble during that time, bring it back and we’ll make it right.
+												</p>
+											</div>
+
+										</div>
+									</div>
+								</div>
+
+							</div>
+						</div>
+					</div>
+				</section>
+				
+
+
+
 				<section class="py-5">
 					<div class="container">
 						<section class="mb-5">
@@ -159,12 +226,24 @@ onMounted(async () => {
 						class="delivery-banner py-3 mb-5"
 					>
 						<div class="container text-center">
-							<div class="fw-bold fs-5">
-								🚚 FREE DELIVERY IN FARGO–MOORHEAD
-							</div>
+							<div class="d-flex justify-content-center align-items-start gap-3">
+								<div class="feature-icon">
+									<img
+										src="/images/icons/delivery.png"
+										alt=""
+									>
+								</div>
+								<div>
+									<div class="fs-5">
+										<h4 class="h4 fw-bold ">
+											FREE DELIVERY IN FARGO–MOORHEAD
+										</h4>
+									</div>
 
-							<div class="small">
-								Free local delivery with any equipment purchase.
+									<div>
+										Free local delivery with any equipment purchase.
+									</div>
+								</div>
 							</div>
 						</div>
 					</section>
@@ -224,5 +303,15 @@ onMounted(async () => {
 	background: #ffc107;
 	color: #212529;
 	border-bottom: 1px solid rgba(0, 0, 0, 0.15);
+}
+@media (min-width: 768px) {
+	.border-end-md {
+		border-right: 1px solid var(--bs-border-color);
+	}
+}
+.feature-icon img {
+	width: 56px;
+	height: 56px;
+	object-fit: contain;
 }
 </style>
