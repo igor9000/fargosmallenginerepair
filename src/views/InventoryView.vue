@@ -182,7 +182,13 @@ onMounted(async () => {
 								</p>
 							</div>
 
-							<inventoryitem item="item" />
+							<div class="row g-4">
+								<inventorycard 
+									v-for="item in type.items"
+									:key="item.id"
+									class="col-md-6 col-lg-4"
+								 />
+							</div>
 						</section>
 					</div>
 					<!-- Free delivery banner -->

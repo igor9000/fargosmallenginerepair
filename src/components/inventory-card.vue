@@ -1,6 +1,4 @@
 <script setup>
-import { computed } from 'vue'
-
 const props = defineProps({
 	item: Object
 })
@@ -8,12 +6,7 @@ const props = defineProps({
 </script>
 
 <template>
-	<div class="row g-4">
-		<div
-			v-for="item in type.items"
-			:key="item.id"
-			class="col-md-6 col-lg-4"
-		>
+		<div>
 			<div class="card h-100 shadow-sm inventory-card">
 
 				<img
@@ -29,7 +22,7 @@ const props = defineProps({
 					<div class="d-flex justify-content-between align-items-center mb-3">
 						<img
 							v-if="item.brand_logo_url"
-							:src="`/images/brands/${iitem.brand_logo_url}`"
+							:src="`/images/brands/${item.brand_logo}`"
 							:alt="item.brand_name"
 							class="brand-logo"
 						>
@@ -79,7 +72,6 @@ const props = defineProps({
 				</div>
 			</div>
 		</div>
-	</div>
 </template>
 
 <style scoped>

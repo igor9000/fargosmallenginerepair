@@ -111,13 +111,17 @@ app.get('/api/inventory', async (req, res) => {
 				it.id AS type_id,
 				it.name AS type_name,
 				it.description AS type_description,
-				imgs.url AS image_url
+				imgs.url AS image_url,
+				b.name AS brand_name,
+				b.logo AS brand_logo
 			FROM inventory i
 			INNER JOIN inventory_types it
 				ON i.inventory_type_id = it.id
 			LEFT JOIN inventory_images imgs
 				ON imgs.inventory_id = i.id
 				AND imgs.is_primary = 1
+			LEFT JOIN brands b
+				ON i.brand_id = b.id
 			WHERE i.active = 1
 			ORDER BY it.name, i.name
 		`);
