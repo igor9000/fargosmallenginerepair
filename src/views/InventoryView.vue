@@ -181,7 +181,7 @@ onMounted(async () => {
 									{{ type.description }}
 								</p>
 							</div>
-
+							<div>{{type.items}}
 							<div class="row g-4">
 								<inventorycard 
 									v-for="item in type.items"
