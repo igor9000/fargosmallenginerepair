@@ -109,7 +109,7 @@ onMounted(async () => {
 
 								<!-- Inspection / Service -->
 								<div class="col-md-7 border-end-md">
-									<div class="d-flex align-items-start gap-3">
+									<div class="d-flex align-items-start gap-3 pe-md-4">
 
 										<div class="feature-icon">
 											<img
@@ -134,7 +134,7 @@ onMounted(async () => {
 
 								<!-- Warranty -->
 								<div class="col-md-5">
-									<div class="ps-md-4">
+									<div class="ps-md-3">
 										<div class="d-flex align-items-start gap-3">
 
 											<div class="feature-icon">
@@ -235,7 +235,7 @@ onMounted(async () => {
 								</div>
 								<div>
 									<div class="fs-5">
-										<h4 class="h4 fw-bold ">
+										<h4 class="h4 fw-bold mb-0">
 											FREE DELIVERY IN FARGO–MOORHEAD
 										</h4>
 									</div>
