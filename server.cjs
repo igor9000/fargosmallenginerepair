@@ -118,6 +118,7 @@ app.get('/api/inventory', async (req, res) => {
 			LEFT JOIN inventory_images imgs
 				ON imgs.inventory_id = i.id
 				AND imgs.is_primary = 1
+			WHERE i.active = 1
 			ORDER BY it.name, i.name
 		`);
 
