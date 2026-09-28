@@ -75,23 +75,6 @@ useHead({
 			</div>
 		</div>
 	</section>
-
-	<!-- Call to Action -->
-	<section id="contact" class="py-5">
-		<div class="container text-center">
-
-			<h2>Need Something Fixed?</h2>
-
-			<p class="lead">
-				Contact us to schedule service.
-			</p>
-
-			<a href="/contact" class="btn btn-primary btn-lg mt-3">
-				Contact Us
-			</a>
-
-		</div>
-	</section>
 	</main>
 </template>
 
