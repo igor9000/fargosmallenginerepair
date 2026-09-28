@@ -190,97 +190,96 @@ async function submitForm() {
 							{{ item.sku }}
 						</div>
 					</div>
+<!-- CTA -->
+<div class="my-4">
+	<h5 class="h3 fw-bold">Questions About This {{item.type_name}}?</h5>
+	<div class="row g-2">
+		<div class="col-12 col-sm-6">
+			<a
+				href="tel:7014918696"
+				class="btn btn-primary w-100"
+			>
+				Call 701-491-8696
+			</a>
+		</div>
 
-					<!-- CTA -->
-					<div class="my-4">
-						<h5 class="h3 fw-bold">Questions About This {{item.type_name}}?</h5>
-						<div class="row g-2">
-							<div class="col-12 col-sm-6">
-								<a
-									href="tel:7014918696"
-									class="btn btn-primary w-100"
-								>
-									Call 701-491-8696
-								</a>
-							</div>
+		<div class="col-12 col-sm-6">
+			<a
+				href="sms:7014918696"
+				class="btn btn-outline-dark w-100"
+			>
+				Text 701-491-8696
+			</a>
+		</div>
+	</div>
+</div>
 
-							<div class="col-12 col-sm-6">
-								<a
-									href="sms:7014918696"
-									class="btn btn-outline-dark w-100"
-								>
-									Text 701-491-8696
-								</a>
-							</div>
-						</div>
-					</div>
+<div class="cta-container mt-4">
+	<div class="cta-body">
+		<h2 class="h3 fw-bold mb-3">
+			Message Us About This {{item.type_name}}
+		</h2>
+		<p class="text-muted small mb-3">
+			Send us a quick message and we’ll get back to you.
+		</p>
+		<form @submit.prevent="submitForm">
+			<div class="mb-3">
+				<label class="form-label" for="contact-name">Name</label>
+				<input
+					id="contact-name"
+					v-model="name"
+					type="text"
+					class="form-control"
+					autocomplete="name"
+					placeholder="Your name"
+					required
+				>
+			</div>
 
-					<div class="cta-container mt-4">
-						<div class="cta-body">
-							<h2 class="h3 fw-bold mb-3">
-								Message Us About This {{item.type_name}}
-							</h2>
-							<p class="text-muted small mb-3">
-								Send us a quick message and we’ll get back to you.
-							</p>
-							<form @submit.prevent="submitForm">
-								<div class="mb-3">
-									<label class="form-label" for="contact-name">Name</label>
-									<input
-										id="contact-name"
-										v-model="name"
-										type="text"
-										class="form-control"
-										autocomplete="name"
-										placeholder="Your name"
-										required
-									>
-								</div>
+			<div class="mb-3">
+				<label class="form-label" for="contact-email">Email</label>
+				<input
+					id="contact-email"
+					v-model="email"
+					type="email"
+					class="form-control"
+					autocomplete="email"
+					placeholder="you@example.com"
+					required
+				>
+			</div>
 
-								<div class="mb-3">
-									<label class="form-label" for="contact-email">Email</label>
-									<input
-										id="contact-email"
-										v-model="email"
-										type="email"
-										class="form-control"
-										autocomplete="email"
-										placeholder="you@example.com"
-										required
-									>
-								</div>
+			<div class="mb-3">
+				<label class="form-label" for="contact-message">Message</label>
+				<textarea
+					id="contact-message"
+					v-model="message"
+					class="form-control"
+					rows="4"
+					required
+				/>
+			</div>
 
-								<div class="mb-3">
-									<label class="form-label" for="contact-message">Message</label>
-									<textarea
-										id="contact-message"
-										v-model="message"
-										class="form-control"
-										rows="4"
-										required
-									/>
-								</div>
+			<button
+				type="submit"
+				class="btn btn-primary w-100"
+				:disabled="isSending"
+			>
+				{{ isSending ? 'Sending...' : 'Send Us a Message' }}
+			</button>
 
-								<button
-									type="submit"
-									class="btn btn-primary w-100"
-									:disabled="isSending"
-								>
-									{{ isSending ? 'Sending...' : 'Send Us a Message' }}
-								</button>
-
-								<div
-									v-if="statusMessage"
-									class="mt-3 alert mb-0"
-									:class="sendSuccessful ? 'alert-success' : 'alert-danger'"
-									role="alert"
-								>
-									{{ statusMessage }}
-								</div>
-							</form>
-						</div>
-					</div>
-					<!-- /CTA -->
+			<div
+				v-if="statusMessage"
+				class="mt-3 alert mb-0"
+				:class="sendSuccessful ? 'alert-success' : 'alert-danger'"
+				role="alert"
+			>
+				{{ statusMessage }}
+			</div>
+		</form>
+	</div>
+</div>
+<!-- /CTA -->
 
 				</div>
 
