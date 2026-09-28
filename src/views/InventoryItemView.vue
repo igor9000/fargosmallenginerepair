@@ -40,6 +40,61 @@ onMounted(async () => {
 		loading.value = false
 	}
 })
+
+
+
+
+
+const name = ref('')
+const email = ref('')
+const message = ref('')
+
+const isSending = ref(false)
+const statusMessage = ref('')
+const sendSuccessful = ref(false)
+
+async function submitForm() {
+	isSending.value = true
+	statusMessage.value = ''
+	sendSuccessful.value = false
+
+	try {
+		const response = await fetch('/api/contact', {
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json'
+			},
+			body: JSON.stringify({
+				name: name.value,
+				email: email.value,
+				'product name': product.value,
+				'product type': producttype.value,
+				message: message.value
+			})
+		})
+
+		const result = await response.json()
+
+		if (!response.ok) {
+			throw new Error(result.error || 'Unable to send message')
+		}
+
+		sendSuccessful.value = true
+		statusMessage.value = 'Got it! We\'ll be in touch with you shortly.'
+
+		name.value = ''
+		email.value = ''
+		message.value = ''
+	} catch (error) {
+		console.error('Contact form error:', error)
+
+		sendSuccessful.value = false
+		statusMessage.value =
+			'Unable to send your message. Please try again or call us at 701-491-8696.'
+	} finally {
+		isSending.value = false
+	}
+}
 </script>
 
 <template>
@@ -130,13 +185,73 @@ onMounted(async () => {
 							{{ item.sku }}
 						</div>
 					</div>
+<!-- CTA -->
+<div class="card mt-4">
+	<div class="card-body">
+		<h2 class="h5 fw-bold mb-3">
+			Ask About This {{type_name}}
+		</h2>
+		<form @submit.prevent="submitForm">
+			<input type="hidden" id="product" :value="item.name" />
+			<input type="hidden" id="producttype" :value="type_name" />
+			<div class="mb-3">
+				<label class="form-label" for="contact-name">Name</label>
+				<input
+					id="contact-name"
+					v-model="name"
+					type="text"
+					class="form-control"
+					autocomplete="name"
+					placeholder="Your name"
+					required
+				>
+			</div>
 
-					<a
-						href="/contact"
-						class="btn btn-primary btn-lg w-100"
-					>
-						I'm Interested
-					</a>
+			<div class="mb-3">
+				<label class="form-label" for="contact-email">Email</label>
+				<input
+					id="contact-email"
+					v-model="email"
+					type="email"
+					class="form-control"
+					autocomplete="email"
+					placeholder="you@example.com"
+					required
+				>
+			</div>
+
+			<div class="mb-3">
+				<label class="form-label" for="contact-message">Message</label>
+				<textarea
+					id="contact-message"
+					v-model="message"
+					class="form-control"
+					rows="4"
+					:placeholder="`I'm interested in the ${item.name}, can you tell me more?`"
+					required
+				/>
+			</div>
+
+			<button
+				type="submit"
+				class="btn btn-primary w-100"
+				:disabled="isSending"
+			>
+				{{ isSending ? 'Sending...' : 'Send Inquiry' }}
+			</button>
+
+			<div
+				v-if="statusMessage"
+				class="mt-3 alert mb-0"
+				:class="sendSuccessful ? 'alert-success' : 'alert-danger'"
+				role="alert"
+			>
+				{{ statusMessage }}
+			</div>
+		</form>
+	</div>
+</div>
+<!-- /CTA -->
 
 				</div>
 
@@ -163,7 +278,7 @@ onMounted(async () => {
 }
 
 .main-image {
-	aspect-ratio: 4 / 3;
+	aspect-ratio: 1 / 1;
 	overflow: hidden;
 }
 
