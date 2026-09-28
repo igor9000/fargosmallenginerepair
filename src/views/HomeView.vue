@@ -54,7 +54,7 @@ onMounted(async () => {
 			</h1>
 
 			<p class="lead mt-3">
-				Lawn mowers, snow blowers, generators, and more.
+				Repair, maintenance, and service for lawn mowers, snow blowers, pressure washers, and outdoor power equipment.
 			</p>
 
 			<a href="/contact" class="btn btn-primary btn-lg mt-3">
