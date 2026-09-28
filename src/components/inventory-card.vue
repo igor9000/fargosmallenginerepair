@@ -81,7 +81,7 @@ const props = defineProps({
 
 .brand-logo {
 	max-width: 100%;
-	max-height: 42px;
+	max-height: 2em;
 	object-fit: contain;
 	object-position: left center;
 }
