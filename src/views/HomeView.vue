@@ -24,7 +24,6 @@ const loading = ref(true)
 const error = ref(null)
 
 onMounted(async () => {
-	/*
 	try {
 		const response = await fetch('/api/inventory?featured=true')
 
@@ -39,7 +38,6 @@ onMounted(async () => {
 	} finally {
 		loading.value = false
 	}
-	*/
 });
 </script>
 
