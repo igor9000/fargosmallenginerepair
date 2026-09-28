@@ -23,7 +23,7 @@ const imgsrc = computed(() => {
 			>
 
 			<div class="card-body">
-				<h5 class="card-title">{{title}}</h5>
+				<h3 class="card-title h5">{{title}}</h3>
 				<p class="card-text">
 					{{body}}
 				</p>

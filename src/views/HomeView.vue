@@ -5,13 +5,13 @@ import inventorycard from '../components/inventory-card.vue';
 import homecard from '../components/homecard.vue';
 
 useHead({
-	title: 'Small Engine Repair Services | Fargo Small Engine Repair',
+	title: 'Small Engine Repair Services in Fargo, ND | Fargo Small Engine Repair',
 
 	meta: [
 		{
 			name: 'description',
 			content:
-				'Lawn mower, snow blower, pressure washer, and small engine repair services in Fargo, ND.'
+				'Fargo Small Engine Repair provides lawn mower, snow blower, pressure washer, and small engine repair services in Fargo, ND.'
 		}
 	]
 })
@@ -50,7 +50,7 @@ onMounted(async () => {
 		</div>
 		<div class="container py-5 text-center">
 			<h1 class="display-4 fw-bold">
-				Small Engine Repair You Can Count On
+				Small Engine Repair You Can Count On in Fargo-Moorhead
 			</h1>
 
 			<p class="lead mt-3">
@@ -79,21 +79,21 @@ onMounted(async () => {
 
 				<homecard
 					title="Lawn Mowers"
-					body="Diagnosis, repair, tune-ups, and maintenance."
+					body="Keep your lawn mower in shape with diagnosis, repair, tune-ups, and maintenance."
 					image="lawnmower.png"
 					alt="Lawn mower cutting grass"
 				/>
 
 				<homecard
 					title="Snow Blowers"
-					body="Get your equipment ready before winter hits."
+					body="Get your snow blower fully serviced and ready before the next winter storm hits."
 					image="snowblower.png"
 					alt="Snow blower clearing driveway"
 				/>
 
 				<homecard
 					title="Other Equipment"
-					body="Generators, pressure washers, tillers, and more."
+					body="Repair and maintenance for generators, pressure washers, tillers, and other small engine equipment."
 					image="pressurewasher.png"
 					alt="Pressure washer cleaning driveway"
 				/>
