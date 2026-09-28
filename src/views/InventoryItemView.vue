@@ -21,8 +21,6 @@ const selectImage = (image) => {
 const name = ref('')
 const email = ref('')
 const message = ref('')
-const product = ref('')
-const producttype = ref('')
 
 onMounted(async () => {
 	try {
@@ -73,8 +71,8 @@ async function submitForm() {
 			body: JSON.stringify({
 				name: name.value,
 				email: email.value,
-				'product name': product.value,
-				'product type': producttype.value,
+				'product name': item.value.name,
+				'product type': item.value.type_name,
 				message: message.value
 			})
 		})
@@ -198,8 +196,6 @@ async function submitForm() {
 			Ask About This {{item.type_name}}
 		</h2>
 		<form @submit.prevent="submitForm">
-			<input type="hidden" id="product" :value="item.name" />
-			<input type="hidden" id="producttype" :value="item.type_name" />
 			<div class="mb-3">
 				<label class="form-label" for="contact-name">Name</label>
 				<input
