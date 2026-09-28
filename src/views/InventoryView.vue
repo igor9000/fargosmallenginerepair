@@ -124,7 +124,7 @@ onMounted(async () => {
 								<inventorycard 
 									v-for="item in type.items"
 									:key="item.id"
-									class="col-md-6 col-lg-4"
+									class="col-md-6 col-lg-3"
 									:item
 								 />
 							</div>
