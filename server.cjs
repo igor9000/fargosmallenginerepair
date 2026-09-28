@@ -111,7 +111,7 @@ app.get('/api/inventory', async (req, res) => {
 
 		if (featured === 'true') {
 			whereClause += ' AND i.featured = 1';
-			orderClause = 'ORDER BY RANDOM()';
+			orderClause = 'ORDER BY RAND()';
 			limitClause = 'LIMIT 3';
 		}
 
