@@ -191,8 +191,8 @@ async function submitForm() {
 						</div>
 					</div>
 <!-- CTA -->
-<div class="mt-4">
-	<h5 class="h3 fw-bold">Questions about this {{item.type_name}}?</h5>
+<div class="my-4">
+	<h5 class="h3 fw-bold">Questions About This {{item.type_name}}?</h5>
 	<div class="row g-2">
 		<div class="col-12 col-sm-6">
 			<a
@@ -217,7 +217,7 @@ async function submitForm() {
 <div class="cta-container mt-4">
 	<div class="cta-body">
 		<h2 class="h3 fw-bold mb-3">
-			Interested in this {{item.type_name}}?
+			Message Us About This {{item.type_name}}
 		</h2>
 		<p class="text-muted small mb-3">
 			Send us a quick message and we’ll get back to you.
@@ -265,7 +265,7 @@ async function submitForm() {
 				class="btn btn-primary w-100"
 				:disabled="isSending"
 			>
-				{{ isSending ? 'Sending...' : `Ask About This ${item.type_name}` }}
+				{{ isSending ? 'Sending...' : 'Send Us a Message' }}
 			</button>
 
 			<div
