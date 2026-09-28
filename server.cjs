@@ -210,6 +210,47 @@ app.get('/api/inventory/:sku', async (req, res) => {
 
 
 
+//sitemap
+app.get('/sitemap.xml', async (req, res) => {
+	try {
+		const [inventory] = await db.query(`
+			SELECT sku
+			FROM inventory
+			WHERE active = 1
+		`);
+
+		const staticUrls = [
+			'https://www.fargosmallenginerepair.com/',
+			'https://www.fargosmallenginerepair.com/inventory',
+			'https://www.fargosmallenginerepair.com/services',
+			'https://www.fargosmallenginerepair.com/contact',
+			'https://www.fargosmallenginerepair.com/about'
+		];
+
+		const inventoryUrls = inventory.map(item =>
+			`https://www.fargosmallenginerepair.com/inventory/${encodeURIComponent(item.sku)}`
+		);
+
+		const urls = [...staticUrls, ...inventoryUrls];
+
+		const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+${urls.map(url => `
+	<url>
+		<loc>${url}</loc>
+	</url>`).join('')}
+</urlset>`;
+
+		res
+			.type('application/xml')
+			.send(xml);
+	} catch (error) {
+		console.error('Sitemap generation error:', error);
+		res.status(500).send('Unable to generate sitemap');
+	}
+});
+
+
 
 
 
