@@ -103,6 +103,18 @@ ${message}`
 // inventory list
 app.get('/api/inventory', async (req, res) => {
 	try {
+		const { featured } = req.query;
+
+		let whereClause = 'WHERE i.active = 1';
+		let orderClause = 'ORDER BY it.name, i.price DESC';
+		let limitClause = '';
+
+		if (featured === 'true') {
+			whereClause += ' AND i.featured = 1';
+			orderClause = 'ORDER BY RANDOM()';
+			limitClause = 'LIMIT 3';
+		}
+
 		const [rows] = await db.query(`
 			SELECT
 				i.id,
@@ -124,8 +136,9 @@ app.get('/api/inventory', async (req, res) => {
 				AND imgs.is_primary = 1
 			LEFT JOIN brands b
 				ON i.brand_id = b.id
-			WHERE i.active = 1
-			ORDER BY it.name, i.price DESC
+			${whereClause}
+			${orderClause}
+			${limitClause}
 		`);
 
 		res.json(rows);
