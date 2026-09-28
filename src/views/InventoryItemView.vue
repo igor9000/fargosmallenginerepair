@@ -18,6 +18,12 @@ const selectImage = (image) => {
 	selectedImage.value = image
 }
 
+const name = ref('')
+const email = ref('')
+const message = ref('')
+const product = ref('')
+const producttype = ref('')
+
 onMounted(async () => {
 	try {
 		const response = await fetch(`/api/inventory/${route.params.sku}`)
@@ -32,6 +38,8 @@ onMounted(async () => {
 			images.value.find(image => image.is_primary) ??
 			images.value[0] ??
 			null
+
+		message.value = `I'm interested in the ${item.name}, can you tell me more?`
 	}
 	catch (err) {
 		error.value = err.message
@@ -45,9 +53,7 @@ onMounted(async () => {
 
 
 
-const name = ref('')
-const email = ref('')
-const message = ref('')
+
 
 const isSending = ref(false)
 const statusMessage = ref('')
@@ -227,7 +233,6 @@ async function submitForm() {
 					v-model="message"
 					class="form-control"
 					rows="4"
-					:placeholder="`I'm interested in the ${item.name}, can you tell me more?`"
 					required
 				/>
 			</div>
