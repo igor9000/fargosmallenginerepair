@@ -147,7 +147,7 @@ app.get('/api/inventory/:sku', async (req, res) => {
 				i.description,
 				i.price,
 				it.id AS type_id,
-				it.name AS type_name,
+				it.singular_name AS type_name,
 				it.description AS type_description,
 				b.name AS brand_name,
 				b.logo AS brand_logo
