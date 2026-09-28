@@ -189,11 +189,11 @@ async function submitForm() {
 <div class="card mt-4">
 	<div class="card-body">
 		<h2 class="h5 fw-bold mb-3">
-			Ask About This {{type_name}}
+			Ask About This {{item.type_name}}
 		</h2>
 		<form @submit.prevent="submitForm">
 			<input type="hidden" id="product" :value="item.name" />
-			<input type="hidden" id="producttype" :value="type_name" />
+			<input type="hidden" id="producttype" :value="item.type_name" />
 			<div class="mb-3">
 				<label class="form-label" for="contact-name">Name</label>
 				<input
