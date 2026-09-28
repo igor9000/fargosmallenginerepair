@@ -44,7 +44,7 @@ const props = defineProps({
 
 			<div class="row align-items-start">
 				<div class="col lh-1">
-					<h5 class="h5 card-title fw-bold">
+					<h5 class="h5 card-title fw-bold my-3">
 						{{ item.name }}
 					</h5>
 				</div>
