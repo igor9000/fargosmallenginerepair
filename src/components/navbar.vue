@@ -27,6 +27,12 @@
 					</li>
 
 					<li class="nav-item">
+						<RouterLink class="nav-link" to="/inventory">
+							Inventory
+						</RouterLink>
+					</li>
+
+					<li class="nav-item">
 						<RouterLink class="nav-link" to="/about">
 							About
 						</RouterLink>
