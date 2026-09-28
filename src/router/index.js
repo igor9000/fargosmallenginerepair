@@ -31,6 +31,14 @@ const router = createRouter({
 			path: '/inventory',
 			name: 'inventory',
 			component: () => import('../views/InventoryView.vue')
+		},
+		{
+			path: '/inventory/:sku',
+			name: 'inventory-item',
+			component: () => import('../views/InventoryItemView.vue'),
+			meta: {
+				showCTA: false
+			}
 		}
 	],
 })
