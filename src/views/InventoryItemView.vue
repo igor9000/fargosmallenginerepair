@@ -191,11 +191,37 @@ async function submitForm() {
 						</div>
 					</div>
 <!-- CTA -->
-<div class="card mt-4">
-	<div class="card-body">
-		<h2 class="h5 fw-bold mb-3">
-			Ask About This {{item.type_name}}
+<div class="mt-4">
+	<h5 class="h3 fw-bold">Questions about this {{item.type_name}}?</h5>
+	<div class="row g-2">
+		<div class="col-12 col-sm-6">
+			<a
+				href="tel:7014918696"
+				class="btn btn-primary w-100"
+			>
+				Call 701-491-8696
+			</a>
+		</div>
+
+		<div class="col-12 col-sm-6">
+			<a
+				href="sms:7014918696"
+				class="btn btn-outline-dark w-100"
+			>
+				Text 701-491-8696
+			</a>
+		</div>
+	</div>
+</div>
+
+<div class="cta-container mt-4">
+	<div class="cta-body">
+		<h2 class="h3 fw-bold mb-3">
+			Interested in this {{item.type_name}}?
 		</h2>
+		<p class="text-muted small mb-3">
+			Send us a quick message and we’ll get back to you.
+		</p>
 		<form @submit.prevent="submitForm">
 			<div class="mb-3">
 				<label class="form-label" for="contact-name">Name</label>
@@ -239,7 +265,7 @@ async function submitForm() {
 				class="btn btn-primary w-100"
 				:disabled="isSending"
 			>
-				{{ isSending ? 'Sending...' : 'Send Inquiry' }}
+				{{ isSending ? 'Sending...' : `Ask About This ${item.type_name}` }}
 			</button>
 
 			<div
@@ -323,5 +349,12 @@ async function submitForm() {
 	max-width: 100%;
 	height: auto;
 	object-fit: contain;
+}
+.cta-body {
+	margin-top: 1.25rem;
+    padding: 1rem;
+    border: 1px solid var(--bs-border-color);
+    border-radius: var(--bs-border-radius-lg);
+    background: var(--bs-light);
 }
 </style>
