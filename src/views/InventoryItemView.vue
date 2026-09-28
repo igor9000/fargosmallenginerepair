@@ -71,8 +71,8 @@ async function submitForm() {
 			body: JSON.stringify({
 				name: name.value,
 				email: email.value,
-				'product name': item.value.name,
-				'product type': item.value.type_name,
+				productName: item.value.name,
+				productType: item.value.type_name,
 				message: message.value
 			})
 		})

@@ -52,13 +52,15 @@ async function sendEmail({ to, replyTo, subject, text }) {
 }
 
 app.post("/api/contact", async (req, res) => {
-  const { name, email, message } = req.body;
+  const { name, email, message, productName, productType } = req.body;
 
   if (!name || !email || !message) {
 	return res.status(400).json({
 	  error: "Missing required fields"
 	});
   }
+
+  const productInfo = productName && productType ? `\nProduct Name: ${productName}\nProduct Type: ${productType}\n` : '';
 
   const recipient = process.env.CONTACT_FORM_RECIPIENT_EMAIL;
 
@@ -77,7 +79,7 @@ app.post("/api/contact", async (req, res) => {
 	  subject: `Website contact from ${name}`,
 	  text: `Name: ${name}
 Email: ${email}
-
+${productInfo}
 ${message}`
 	});
 
