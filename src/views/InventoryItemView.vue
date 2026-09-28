@@ -39,7 +39,7 @@ onMounted(async () => {
 			images.value[0] ??
 			null
 
-		message.value = `I'm interested in the ${item.name}, can you tell me more?`
+		message.value = `I'm interested in the ${item.value.name}, can you tell me more?`
 	}
 	catch (err) {
 		error.value = err.message
@@ -290,7 +290,7 @@ async function submitForm() {
 .main-image img {
 	width: 100%;
 	object-fit: contain;
-    object-position: center;
+    object-position: center -100px;
 }
 
 .thumbnail {
