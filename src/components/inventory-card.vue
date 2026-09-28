@@ -22,7 +22,7 @@ const props = defineProps({
 		<div class="card-body d-flex flex-column">
 
 
-			<div class="row align-items-start">
+			<div class="row align-items-center">
 				<div class="col lh-1">
 					<img
 						v-if="item.brand_logo"
@@ -42,10 +42,6 @@ const props = defineProps({
 			</div>
 
 
-
-
-			<hr class="mt-0 mb-3">
-
 			<div class="row align-items-start">
 				<div class="col lh-1">
 					<h5 class="h5 card-title fw-bold">
@@ -60,7 +56,7 @@ const props = defineProps({
 						:to="`/inventory/${item.sku}`"
 						class="btn btn-primary flex-fill"
 					>
-						View Details
+						More Details
 					</RouterLink>
 
 				</div>
@@ -84,7 +80,7 @@ const props = defineProps({
 }
 
 .brand-logo {
-	max-width: 150px;
+	max-width: 100%;
 	max-height: 42px;
 	object-fit: contain;
 	object-position: left center;
