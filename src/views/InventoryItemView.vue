@@ -72,6 +72,7 @@ async function submitForm() {
 				name: name.value,
 				email: email.value,
 				productName: item.value.name,
+				productSku: item.value.sku,
 				productType: item.value.type_name,
 				message: message.value
 			})

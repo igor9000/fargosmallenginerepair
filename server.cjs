@@ -52,7 +52,7 @@ async function sendEmail({ to, replyTo, subject, text }) {
 }
 
 app.post("/api/contact", async (req, res) => {
-  const { name, email, message, productName, productType } = req.body;
+  const { name, email, message, productName, productType, productSku } = req.body;
 
   if (!name || !email || !message) {
 	return res.status(400).json({
@@ -60,7 +60,7 @@ app.post("/api/contact", async (req, res) => {
 	});
   }
 
-  const productInfo = productName && productType ? `\nProduct Name: ${productName}\nProduct Type: ${productType}\n` : '';
+  const productInfo = productName && productType && productSku ? `\nProduct Name: ${productName}\nProduct SKU: ${productSku}\nProduct Type: ${productType}\n` : '';
 
   const recipient = process.env.CONTACT_FORM_RECIPIENT_EMAIL;
 
