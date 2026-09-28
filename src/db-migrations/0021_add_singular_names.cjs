@@ -1,8 +1,4 @@
 exports.up = async function(knex) {
-	await knex.schema.alterTable('inventory_types', (table) => {
-		table.string('singular_name', 255).nullable().after('name')
-	})
-
 	const types = [
 		{ name: 'Lawn Mowers', singular_name: 'Lawn Mower' },
 		{ name: 'Snow Blowers', singular_name: 'Snow Blower' },
