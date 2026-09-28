@@ -107,7 +107,7 @@ onMounted(async () => {
 		<div class="container">
 
 			<div class="text-center mb-5">
-				<h2>Current Inventory</h2>
+				<h2>Featured Inventory</h2>
 				<p class="text-muted">
 					Quality used equipment without the new equipment price tag.
 				</p>
@@ -124,7 +124,7 @@ onMounted(async () => {
 
 				<div class="col-md-6 col-lg-3">	
 					<div class="card h-100 shadow-sm full-inventory-card">
-						<div class="card-body d-flex flex-column justify-content-center text-center p-4">
+						<div class="card-body d-flex flex-column justify-content-center text-center">
 							<div class="mb-3">
 								<i class="bi bi-grid-3x3-gap fs-1"></i>
 							</div>
