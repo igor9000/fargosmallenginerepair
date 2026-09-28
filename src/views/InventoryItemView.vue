@@ -65,7 +65,7 @@ onMounted(async () => {
 						class="main-image border rounded-3 bg-light mb-3"
 					>
 						<img
-							:src="selectedImage.url"
+							:src="`/images/inventory/${item.sku}/${selectedImage.url}`"
 							:alt="item.name"
 						>
 					</div>
@@ -83,7 +83,7 @@ onMounted(async () => {
 							@click="selectImage(image)"
 						>
 							<img
-								:src="image.url"
+								:src="`/images/inventory/${item.sku}/${image.url}`"
 								:alt="item.name"
 							>
 						</button>
@@ -96,7 +96,12 @@ onMounted(async () => {
 				<div class="col-lg-5">
 
 					<div class="text-muted mb-2">
-						{{ item.brand_name }}
+						<img
+							v-if="item.brand_logo"
+							:src="`/images/brands/${item.brand_logo}`"
+							:alt="item.brand_name"
+							class="brand-logo"
+						>
 					</div>
 
 					<h1 class="display-6 fw-bold mb-3">
@@ -104,7 +109,10 @@ onMounted(async () => {
 					</h1>
 
 					<div class="fs-2 fw-bold mb-4">
-						${{ Number(item.price).toFixed(2) }}
+						<img src="/images/icons/pricetag.png" alt="" class="pricetag">
+						<span>
+							${{ Number(item.price).toFixed(2) }}
+						</span>
 					</div>
 
 					<p class="lead text-muted">
@@ -181,5 +189,10 @@ onMounted(async () => {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+.pricetag {
+	width: 1em;
+	height: 1em;
+	object-fit: contain;
 }
 </style>
