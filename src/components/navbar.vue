@@ -21,15 +21,21 @@
 			<div class="collapse navbar-collapse" id="navbarNav">
 				<ul class="navbar-nav ms-auto">
 					<li class="nav-item">
-						<a class="nav-link" href="services">Services</a>
+						<RouterLink class="nav-link" to="/services">
+							Services
+						</RouterLink>
 					</li>
 
 					<li class="nav-item">
-						<a class="nav-link" href="about">About</a>
+						<RouterLink class="nav-link" to="/about">
+							About
+						</RouterLink>
 					</li>
 
 					<li class="nav-item">
-						<a class="nav-link" href="contact">Contact</a>
+						<RouterLink class="nav-link" to="/contact">
+							Contact
+						</RouterLink>
 					</li>
 				</ul>
 			</div>
