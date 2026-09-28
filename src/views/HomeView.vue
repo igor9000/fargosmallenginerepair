@@ -49,7 +49,7 @@ onMounted(async () => {
 			<img src="/logo-horizontal.png" alt="Fargo Small Engine Repair" class="img-fluid" width="929" height="213" />
 		</div>
 		<div class="container py-5 text-center">
-			<h1 class="display-4 fw-bold">
+			<h1 class="display-4 fw-bold homepage-title">
 				Small Engine Repair You Can Count On in Fargo-Moorhead
 			</h1>
 
@@ -154,5 +154,11 @@ onMounted(async () => {
 .full-inventory-card {
 	border-radius: 0.5rem;
 	overflow: hidden;
+}
+@media (min-width: 992px) {
+	.homepage-title {
+		padding-left: 3rem !important;
+		padding-right: 3rem !important;
+	}
 }
 </style>
