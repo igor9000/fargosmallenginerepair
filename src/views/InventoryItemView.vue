@@ -156,6 +156,12 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.main-image-container {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
 .main-image {
 	aspect-ratio: 4 / 3;
 	overflow: hidden;
@@ -163,8 +169,8 @@ onMounted(async () => {
 
 .main-image img {
 	width: 100%;
-	height: 100%;
 	object-fit: contain;
+    object-position: center;
 }
 
 .thumbnail {
@@ -193,6 +199,12 @@ onMounted(async () => {
 .pricetag {
 	width: 1em;
 	height: 1em;
+	object-fit: contain;
+}
+.brand-logo {
+	display: block;
+	max-width: 100%;
+	height: auto;
 	object-fit: contain;
 }
 </style>
