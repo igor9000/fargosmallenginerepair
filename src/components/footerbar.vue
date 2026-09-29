@@ -46,13 +46,29 @@ const props = defineProps({
 
 	<!-- Footer -->
 	<footer class="bg-dark text-light py-4">
-		<div class="container text-center">
+		<div class="container d-flex justify-content-center align-items-center gap-2">
 			<small>
 				© 2026 Fargo Small Engine Repair
+			</small>
+			<a
+			  href="https://www.facebook.com/people/Adams-Small-Engine-Repair/61560170892373/"
+			  target="_blank"
+			  rel="noopener noreferrer"
+			>
+				<img src="/images/icons/facebook.png" class="footer-img">
+			</a>
+			<RouterLink to="/contact">
+				<img src="/images/icons/email.png" class="footer-img">
+			</RouterLink>
+			<small>
+				701-491-8696
 			</small>
 		</div>
 	</footer>
 </template>
 
 <style scoped>
+.footer-img {
+	height: 1em;
+}
 </style>
