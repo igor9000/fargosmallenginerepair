@@ -33,7 +33,7 @@ const router = createRouter({
 			component: () => import('../views/InventoryView.vue')
 		},
 		{
-			path: '/inventory/:sku',
+			path: '/inventory/:name/:sku',
 			name: 'inventory-item',
 			component: () => import('../views/InventoryItemView.vue'),
 			meta: {

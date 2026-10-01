@@ -53,7 +53,7 @@ const props = defineProps({
 			<div class="mt-auto pt-3">
 				<div class="d-flex">
 					<RouterLink
-						:to="`/inventory/${item.sku}`"
+						:to="`/inventory/${item.slug}/${item.sku}`"
 						class="btn btn-primary flex-fill"
 					>
 						More Details
