@@ -9,7 +9,7 @@ const route = useRoute();
 <template>
   <navbar />
   <RouterView />
-  <footerbar :showCTA="route.meta.showCTA" />
+  <footerbar :showCTA="route.meta.showFooterCTA" />
 </template>
 
 <style scoped>

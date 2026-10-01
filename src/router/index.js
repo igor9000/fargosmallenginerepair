@@ -19,7 +19,7 @@ const router = createRouter({
 			name: 'contact',
 			component: () => import('../views/ContactView.vue'),
 			meta: {
-				showCTA: false
+				showFooterCTA: false
 			}
 		},
 		{
@@ -37,7 +37,7 @@ const router = createRouter({
 			name: 'inventory-item',
 			component: () => import('../views/InventoryItemView.vue'),
 			meta: {
-				showCTA: false
+				showFooterCTA: false
 			}
 		}
 	],
