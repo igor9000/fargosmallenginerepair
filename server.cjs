@@ -1,6 +1,8 @@
+require('dotenv').config();
 const express = require("express");
 const path = require("path");
 const mysql = require("mysql2/promise");
+
 
 const app = express();
 
@@ -12,6 +14,13 @@ const db = mysql.createPool({
 	waitForConnections: true,
 	connectionLimit: 10
 });
+
+async function logDbVersion() {
+	const [rows] = await db.query('SELECT VERSION() AS version');
+	console.log('DB version:', rows[0].version);
+}
+
+logDbVersion().catch(console.error);
 
 const port = process.env.PORT || 3000;
 const dist = path.join(__dirname, "dist");
