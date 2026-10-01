@@ -5,6 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "devlocal": "run-p dev:server dev:vite",
+    "dev:vite": "vite",
+    "dev:server": "node migrate.cjs && node server.cjs",
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",
