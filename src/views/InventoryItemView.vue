@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useHead } from '@unhead/vue';
 import InventoryFeaturesBanner from '@/components/inventory-features-banner.vue'
 
 const route = useRoute()
@@ -9,6 +10,25 @@ const item = ref(null)
 const loading = ref(true)
 const error = ref(null)
 const selectedImage = ref(null)
+
+useHead(() => ({
+	title: item.value
+		? `${item.value.name} | Fargo Small Engine Repair`
+		: 'Inventory | Fargo Small Engine Repair',
+
+	meta: [
+		{
+			name: 'description',
+			content: item.value
+				? `${item.value.name} for sale at Fargo Small Engine Repair. View photos, details, price, and availability.`
+				: 'Shop inspected and serviced used outdoor power equipment for sale in Fargo, ND.'
+		}
+	]
+}))
+
+
+
+
 
 const images = computed(() => {
 	return item.value?.images ?? []
