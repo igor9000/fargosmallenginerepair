@@ -34,6 +34,36 @@ const images = computed(() => {
 	return item.value?.images ?? []
 })
 
+// The inventory API should return joined attribute definitions and values:
+// attributes: [{ attribute_id, name, slug, value, unit, sort_order }]
+const attributes = computed(() => {
+	const rows = item.value?.attributes
+	if (!Array.isArray(rows)) return []
+
+	return rows
+		.filter(attribute =>
+			attribute?.name &&
+			attribute.value != null &&
+			String(attribute.value).trim() !== ''
+		)
+		.slice()
+		.sort((a, b) =>
+			(Number(a.sort_order) || 0) - (Number(b.sort_order) || 0) ||
+			a.name.localeCompare(b.name)
+		)
+})
+
+const formatAttributeValue = (attribute) => {
+	const value = typeof attribute.value === 'boolean'
+		? (attribute.value ? 'Yes' : 'No')
+		: String(attribute.value).trim()
+	const unit = attribute.unit?.trim()
+
+	return unit && !value.endsWith(` ${unit}`)
+		? `${value} ${unit}`
+		: value
+}
+
 const selectImage = (image) => {
 	selectedImage.value = image
 }
@@ -168,6 +198,26 @@ async function submitForm() {
 							>
 						</button>
 					</div>
+
+					<section
+						v-if="attributes.length > 0"
+						class="specifications mt-4 border rounded-3"
+						aria-labelledby="specifications-heading"
+					>
+						<h2 id="specifications-heading" class="h4 fw-bold mb-0">
+							Specifications
+						</h2>
+						<dl class="specifications-list mb-0">
+							<div
+								v-for="attribute in attributes"
+								:key="attribute.slug"
+								class="specification-row"
+							>
+								<dt>{{ attribute.name }}</dt>
+								<dd>{{ formatAttributeValue(attribute) }}</dd>
+							</div>
+						</dl>
+					</section>
 
 				</div>
 
@@ -319,6 +369,62 @@ async function submitForm() {
 </template>
 
 <style scoped>
+.specifications {
+	overflow: hidden;
+	background: var(--bs-body-bg, #fff);
+}
+
+.specifications h2 {
+	padding: 1rem 1.25rem;
+	border-bottom: 1px solid var(--bs-border-color, #dee2e6);
+	background: var(--bs-light, #f8f9fa);
+}
+
+.specifications-list {
+	padding: 0 1.25rem;
+}
+
+.specification-row {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+	gap: 1rem;
+	padding: .8rem .25rem;
+}
+
+.specification-row + .specification-row {
+	border-top: 1px solid var(--bs-border-color, #dee2e6);
+}
+
+.specification-row dt,
+.specification-row dd {
+	margin: 0;
+	overflow-wrap: anywhere;
+}
+
+.specification-row dt {
+	color: var(--bs-secondary-color, #6c757d);
+	font-weight: 400;
+}
+
+.specification-row dd {
+	color: var(--bs-body-color, #212529);
+	font-weight: 500;
+}
+
+@media (max-width: 575.98px) {
+	.specifications h2 {
+		padding: .875rem 1rem;
+	}
+
+	.specifications-list {
+		padding: 0 1rem;
+	}
+
+	.specification-row {
+		gap: .75rem;
+	}
+}
+
 .main-image-container {
 	display: flex;
 	align-items: center;

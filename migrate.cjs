@@ -20,6 +20,12 @@ const db = knex({
 
 async function migrate() {
 	try {
+		if (process.argv.includes('--reset')) {
+			console.log(`Resetting database: ${process.env.DB_NAME}`);
+			await db.migrate.rollback({}, true);
+			console.log('All migrations rolled back. Rebuilding...');
+		}
+		
 		const [batch, migrations] = await db.migrate.latest();
 
 		if (migrations.length) {

@@ -206,7 +206,24 @@ app.get('/api/inventory/:sku', async (req, res) => {
 			ORDER BY sort_order
 		`, [item.id]);
 
+		const [attributes] = await db.query(`
+			SELECT
+				ia.id AS attribute_id,
+				ia.name,
+				ia.slug,
+				ia.data_type,
+				ia.unit,
+				ia.sort_order,
+				iav.value
+			FROM inventory_attribute_values iav
+			INNER JOIN inventory_attributes ia
+				ON iav.attribute_id = ia.id
+			WHERE iav.inventory_id = ?
+			ORDER BY ia.sort_order, ia.name, ia.id
+		`, [item.id]);
+
 		item.images = images;
+		item.attributes = attributes;
 
 		res.json(item);
 
