@@ -1,0 +1,11 @@
+exports.up = async function(knex) {
+	await knex.schema.alterTable('inventory', (table) => {
+		table.tinyint('pending', 1).notNullable().defaultTo('0');
+	});
+};
+
+exports.down = async function(knex) {
+	await knex.schema.alterTable('inventory', (table) => {
+		table.dropColumn('pending');
+	});
+};
