@@ -8,6 +8,8 @@
     "devlocal": "run-p dev:server dev:vite",
     "dev:vite": "vite",
     "dev:server": "node migrate.cjs && node server.cjs",
+    "query": "node query.cjs",
+    "dbrebuild": "node migrate.cjs --reset",
     "build": "vite build",
     "preview": "vite preview",
     "test:unit": "vitest",
