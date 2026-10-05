@@ -26,7 +26,13 @@ const ribbon = computed(() => {
 
 <template>
 <div>	
-	<div class="card h-100 shadow-sm inventory-card">
+	<div :class="{
+		 	'card h-100': true,
+		 	'shadow-sm': true,
+		 	'inventory-card': true,
+			'card-sale-pending': item.pending === 1,
+			'card-clearance': item.clearance === 1
+		}">
 
 		<div
 			v-if="item.image_url"
@@ -119,7 +125,7 @@ const ribbon = computed(() => {
 	width: 25rem;
 	font-size: 1.5rem;
 
-	
+
 	position: absolute;
 	z-index: 2;
 	padding: 0.35rem 0;
@@ -159,5 +165,9 @@ const ribbon = computed(() => {
 	width: 1em;
 	height: 1em;
 	object-fit: contain;
+}
+
+.card-sale-pending {
+	opacity: .7;
 }
 </style>

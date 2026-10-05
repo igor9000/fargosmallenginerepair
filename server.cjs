@@ -115,7 +115,7 @@ app.get('/api/inventory', async (req, res) => {
 		const { featured } = req.query;
 
 		let whereClause = 'WHERE i.active = 1';
-		let orderClause = 'ORDER BY CASE WHEN it.season = CASE WHEN MONTH(CURRENT_DATE) >= 10 OR MONTH(CURRENT_DATE) <= 3 THEN \'Winter\' ELSE \'Summer\' END THEN 1 WHEN it.season = \'All\' THEN 2 ELSE 3 END, CASE WHEN it.season = \'Winter\' AND it.name = \'Snow Blowers\' THEN 1 WHEN it.season = \'Summer\' AND it.name = \'Lawn Mowers\' THEN 1 ELSE 2 END, it.name ASC, i.price DESC';
+		let orderClause = 'ORDER BY CASE WHEN it.season = CASE WHEN MONTH(CURRENT_DATE) >= 10 OR MONTH(CURRENT_DATE) <= 3 THEN \'Winter\' ELSE \'Summer\' END THEN 1 WHEN it.season = \'All\' THEN 2 ELSE 3 END, CASE WHEN it.season = \'Winter\' AND it.name = \'Snow Blowers\' THEN 1 WHEN it.season = \'Summer\' AND it.name = \'Lawn Mowers\' THEN 1 ELSE 2 END, it.name ASC, i.pending ASC, i.price DESC';
 		let limitClause = '';
 
 		if (featured === 'true') {
