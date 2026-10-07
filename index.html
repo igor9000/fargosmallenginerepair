@@ -39,16 +39,29 @@
 			}
 		}
 		</script>
-	</head>
-	<!-- Google tag (gtag.js) -->
-	<script async src="https://www.googletagmanager.com/gtag/js?id=G-JW2ZYTQJ7X"></script>
-	<script>
-		window.dataLayer = window.dataLayer || [];
-		function gtag(){dataLayer.push(arguments);}
-		gtag('js', new Date());
+		<!-- Google tag (gtag.js) -->
+		<script>
+			const hostname = window.location.hostname.replace(/^www\./, '');
 
-		gtag('config', 'G-JW2ZYTQJ7X');
-	</script>
+			if (hostname === 'fargosmallenginerepair.com') {
+				const GA_ID = 'G-JW2ZYTQJ7X';
+
+				const script = document.createElement('script');
+				script.async = true;
+				script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+				document.head.appendChild(script);
+
+				window.dataLayer = window.dataLayer || [];
+
+				function gtag() {
+					dataLayer.push(arguments);
+				}
+
+				gtag('js', new Date());
+				gtag('config', GA_ID);
+			}
+		</script>
+	</head>
 	<body>
 		<div id="app"></div>
 		<script type="module" src="/src/main.js"></script>
