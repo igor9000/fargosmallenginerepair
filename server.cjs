@@ -136,6 +136,7 @@ Fargo Small Engine Repair`
 		error: "Unable to send email"
 	});
 }
+});
 
 
 
