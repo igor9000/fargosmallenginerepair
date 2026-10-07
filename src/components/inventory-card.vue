@@ -95,13 +95,6 @@ const ribbon = computed(() => {
 	overflow: hidden;
 }
 
-.inventory-image {
-	display: block;
-	width: 100%;
-	height: 250px;
-	object-fit: cover;
-}
-
 .brand-logo {
 	max-width: 100%;
 	max-height: 2em;

@@ -34,7 +34,15 @@ const props = defineProps({
 	overflow: hidden;
 }
 .inventory-image-wrap img {
-	width: 100%;
+	object-fit: cover;
+    object-position: center center;
+    width: 100%;
+    height: 100%;
+}
+.inventory-card .inventory-image-wrap {
+  height: 250px;
+  overflow: hidden;
+  position: relative;
 }
 .inventory-ribbon {
 	top: 4.75rem;
