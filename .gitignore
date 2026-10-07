@@ -41,3 +41,5 @@ __screenshots__/
 test-results/
 playwright-report/
 .env
+fser.sublime-project
+fser.sublime-workspace
