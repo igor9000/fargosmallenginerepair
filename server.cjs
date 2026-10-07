@@ -82,12 +82,12 @@ app.post("/api/contact", async (req, res) => {
 	});
   }
 
-  try {
+try {
 	const result = await sendEmail({
-	  to: recipient,
-	  replyTo: email,
-	  subject: `Website contact from ${name}`,
-	  text: `Name: ${name}
+		to: recipient,
+		replyTo: email,
+		subject: `Website contact from ${name}`,
+		text: `Name: ${name}
 Email: ${email}
 ${productInfo}
 ${message}`
@@ -95,17 +95,47 @@ ${message}`
 
 	console.log("Contact form email sent:", result.messageId);
 
+	// Only runs if the email to you succeeded
+	try {
+		const confirmationResult = await sendEmail({
+			to: email,
+			replyTo: recipient,
+			subject: "We received your message",
+			text: `Hi ${name},
+
+Thanks for contacting Fargo Small Engine Repair.
+
+We received your message and will get back to you shortly.
+
+Your message:
+${message}
+
+Thanks,
+Adam
+Fargo Small Engine Repair`
+		});
+
+		console.log(
+			"Customer confirmation email sent:",
+			confirmationResult.messageId
+		);
+	} catch (confirmationError) {
+		console.error(
+			"Customer confirmation email error:",
+			confirmationError
+		);
+	}
+
 	res.json({
-	  success: true
+		success: true
 	});
-  } catch (error) {
+} catch (error) {
 	console.error("Contact form email error:", error);
 
 	res.status(500).json({
-	  error: "Unable to send email"
+		error: "Unable to send email"
 	});
-  }
-});
+}
 
 
 
