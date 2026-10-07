@@ -35,8 +35,8 @@ async function sendEmail({ to, replyTo, subject, text }) {
 	  headers: {
 		"content-type": "application/json"
 	  },
-	  from: "Fargo Small Engine Repair <adam@fargosmallenginerepair.com>",
 	  body: JSON.stringify({
+	  from: "Fargo Small Engine Repair <adam@fargosmallenginerepair.com>",
 		to: [to],
 		replyTo,
 		subject,
