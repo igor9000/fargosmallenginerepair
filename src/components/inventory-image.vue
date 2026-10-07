@@ -33,11 +33,15 @@ const props = defineProps({
 	position: relative;
 	overflow: hidden;
 }
+.inventory-image-wrap img {
+	width: 100%;
+}
 .inventory-ribbon {
-	top: 9.75rem;
-	left: -12.5rem;
-	width: 50rem;
-	font-size: 3rem;
+	top: 4.75rem;
+	left: -6.5rem;
+	width: 25rem;
+	font-size: 1.5rem;
+	
 
 
 	position: absolute;
@@ -70,12 +74,12 @@ const props = defineProps({
 
 
 
-@media (max-width: 575.98px) {
-	.inventory-ribbon {
-		top: 4.75rem;
-		left: -6.5rem;
-		width: 25rem;
-		font-size: 1.5rem;
+@media (min-width: 576px) {
+	.main-image .inventory-ribbon {
+		top: 9.75rem;
+		left: -12.5rem;
+		width: 50rem;
+		font-size: 3rem;
 	}
 }
 </style>
