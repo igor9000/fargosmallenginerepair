@@ -15,7 +15,7 @@ const props = defineProps({
 <template>
 	<div class="inventory-image-wrap">
 		<img
-			:src="`/images/inventory/${image.src}`"
+			:src="`//media.fargosmallenginerepair.com/inventory/${image.src}`"
 			:alt="image.name"
 			:class="image.class"
 		>

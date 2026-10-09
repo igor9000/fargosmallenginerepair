@@ -207,7 +207,7 @@ async function submitForm() {
 							@click="selectImage(image)"
 						>
 							<img
-								:src="`/images/inventory/${item.sku}/${image.url}`"
+								:src="`//media.fargosmallenginerepair.com/inventory/${item.sku}/${image.url}`"
 								:alt="item.name"
 							>
 						</button>
