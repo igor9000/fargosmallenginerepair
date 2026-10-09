@@ -10,7 +10,7 @@ const route = useRoute()
 const item = ref(null)
 const loading = ref(true)
 const error = ref(null)
-const selectedImage = ref(null)
+const selectedMedia = ref(null)
 
 useHead(() => ({
 	title: item.value
@@ -44,9 +44,39 @@ const ribbon = computed(() => {
 })
 
 
-const images = computed(() => {
-	return item.value?.images ?? []
+// The API can return video entries alongside images in `images`, or in `videos`.
+// Each media entry needs a `url`. Video entries may use media_type: 'video'
+// (or type: 'video', mime_type: 'video/mp4'), or simply end in .mp4/.webm.
+const isVideo = (media) =>
+	media?._galleryType === 'video' ||
+	media?.is_video === true ||
+	String(media?.media_type ?? media?.type ?? media?.mime_type ?? '').toLowerCase().startsWith('video') ||
+	/\.(mp4|webm|ogv|ogg|m4v|mov)(?:[?#]|$)/i.test(String(media?.url ?? ''))
+
+const galleryMedia = computed(() => {
+	const images = Array.isArray(item.value?.images) ? item.value.images : []
+	const videos = Array.isArray(item.value?.videos) ? item.value.videos : []
+
+	return [
+		...images.map((media, index) => ({
+			...media,
+			_galleryType: isVideo(media) ? 'video' : 'image',
+			_galleryKey: `image-${media.id ?? index}-${media.url}`
+		})),
+		...videos.map((media, index) => ({
+			...media,
+			_galleryType: 'video',
+			_galleryKey: `video-${media.id ?? index}-${media.url}`
+		}))
+	].filter(media => media.url)
 })
+
+const mediaUrl = (path) => {
+	const url = String(path ?? '').trim()
+	if (/^(https?:)?\/\//i.test(url) || url.startsWith('/')) return url
+	return `//media.fargosmallenginerepair.com/inventory/${item.value?.sku}/${url}`
+}
+
 
 // The inventory API should return joined attribute definitions and values:
 // attributes: [{ attribute_id, name, slug, value, unit, sort_order }]
@@ -78,8 +108,8 @@ const formatAttributeValue = (attribute) => {
 		: value
 }
 
-const selectImage = (image) => {
-	selectedImage.value = image
+const selectMedia = (media) => {
+	selectedMedia.value = media
 }
 
 const name = ref('')
@@ -96,9 +126,9 @@ onMounted(async () => {
 
 		item.value = await response.json()
 
-		selectedImage.value =
-			images.value.find(image => image.is_primary) ??
-			images.value[0] ??
+		selectedMedia.value =
+			galleryMedia.value.find(media => media.is_primary) ??
+			galleryMedia.value[0] ??
 			null
 
 		message.value = `I'm interested in the ${item.value.name}, can you tell me more?`
@@ -181,34 +211,59 @@ async function submitForm() {
 
 			<div class="row g-5">
 
-				<!-- Images -->
+				<!-- Images and videos -->
 				<div class="col-lg-7">
 
 					<div
-						v-if="selectedImage"
+						v-if="selectedMedia"
 						class="main-image border rounded-3 bg-light mb-3"
 					>
+						<video
+							v-if="selectedMedia._galleryType === 'video'"
+							:key="selectedMedia._galleryKey"
+							class="main-video"
+							:src="mediaUrl(selectedMedia.url)"
+							:poster="selectedMedia.poster_url ? mediaUrl(selectedMedia.poster_url) : undefined"
+							controls
+							playsinline
+							preload="metadata"
+						>
+							Your browser doesn't support embedded video.
+						</video>
 						<InventoryImage
-							:image="{ src: `${item.sku}/${selectedImage.url}`, name: item.name}"
+							v-else
+							:image="{ src: `${item.sku}/${selectedMedia.url}`, name: item.name }"
 							:ribbon
 						/>
 					</div>
 
 					<div
-						v-if="images.length > 1"
+						v-if="galleryMedia.length > 1"
 						class="d-flex gap-2 flex-wrap"
+						aria-label="Product media gallery"
 					>
 						<button
-							v-for="image in images"
-							:key="image.id"
+							v-for="media in galleryMedia"
+							:key="media._galleryKey"
 							type="button"
 							class="thumbnail border rounded-2 p-0"
-							:class="{ active: selectedImage?.id === image.id }"
-							@click="selectImage(image)"
+							:class="{ active: selectedMedia?._galleryKey === media._galleryKey, 'video-thumbnail': media._galleryType === 'video' }"
+							:aria-label="media._galleryType === 'video' ? `Show video of ${item.name}` : `Show photo of ${item.name}`"
+							:aria-pressed="selectedMedia?._galleryKey === media._galleryKey"
+							@click="selectMedia(media)"
 						>
+							<template v-if="media._galleryType === 'video'">
+								<img
+									v-if="media.poster_url"
+									:src="mediaUrl(media.poster_url)"
+									:alt="''"
+								>
+								<span class="play-icon" aria-hidden="true">▶</span>
+							</template>
 							<img
-								:src="`//media.fargosmallenginerepair.com/inventory/${item.sku}/${image.url}`"
-								:alt="item.name"
+								v-else
+								:src="mediaUrl(media.url)"
+								:alt="''"
 							>
 						</button>
 					</div>
@@ -478,6 +533,34 @@ async function submitForm() {
 	width: 100%;
 	height: 100%;
 	object-fit: cover;
+}
+
+.main-video {
+	display: block;
+	width: 100%;
+	height: 100%;
+	background: #111;
+	object-fit: contain;
+}
+
+.video-thumbnail {
+	position: relative;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background: #292929;
+}
+
+.play-icon {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+	font-size: 1.5rem;
+	text-shadow: 0 1px 4px #000;
+	pointer-events: none;
 }
 .pricetag {
 	width: 1em;

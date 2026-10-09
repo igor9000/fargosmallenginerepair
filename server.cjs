@@ -236,7 +236,9 @@ app.get('/api/inventory/:sku', async (req, res) => {
 				id,
 				url,
 				sort_order,
-				is_primary
+				is_primary,
+			  poster_url,
+				media_type
 			FROM inventory_images
 			WHERE inventory_id = ?
 			ORDER BY sort_order
