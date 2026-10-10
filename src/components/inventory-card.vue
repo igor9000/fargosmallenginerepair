@@ -75,7 +75,7 @@ const ribbon = computed(() => {
 				<div class="d-flex">
 					<RouterLink
 						:to="`/inventory/${item.slug}/${item.sku}`"
-						class="btn btn-primary flex-fill"
+						class="btn btn-primary flex-fill stretched-link"
 					>
 						More Details
 					</RouterLink>
