@@ -32,6 +32,10 @@ exports.up = async function(knex) {
 
 exports.down = async function(knex) {
 	await knex.schema.alterTable('inventory', table => {
+        table.dropForeign('inventory_type_id');
+    });
+
+	await knex.schema.alterTable('inventory', table => {
 		table.dropColumn('inventory_type_id');
 	});
 };

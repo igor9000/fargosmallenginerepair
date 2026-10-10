@@ -9,6 +9,6 @@ exports.up = async function(knex) {
 
 exports.down = async function(knex) {
 	await knex('brands')
-		.where({ slug: 'murray', logo: 'murray.png' })
+		.where({ name: 'Murray', logo: 'murray.png' })
 		.del();
 };

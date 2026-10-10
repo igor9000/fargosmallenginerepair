@@ -59,6 +59,6 @@ exports.down = async function(knex) {
 	await knex('inventory')
 		.whereIn('sku', updates.map(item => item.sku))
 		.update({
-			slug: null
+			slug: ''
 		});
 };
