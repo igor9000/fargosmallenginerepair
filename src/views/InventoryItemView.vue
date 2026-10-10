@@ -501,15 +501,26 @@ async function submitForm() {
 }
 
 .main-image {
-	aspect-ratio: 1 / 1;
-	overflow: hidden;
+    position: relative;
+    aspect-ratio: 1 / 1;
+    overflow: hidden;
 }
 
-.main-image img {
-	width: 100%;
-	object-fit: contain;
-    object-position: center -100px;
+.main-image :deep(.inventory-image-wrap) {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
 }
+
+.main-image :deep(.inventory-image-wrap img) {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: 50% 50%;
+}
+
 
 .thumbnail {
 	width: 90px;
