@@ -28,59 +28,59 @@ const dist = path.join(__dirname, "dist");
 app.use(express.json());
 
 async function sendEmail({ to, replyTo, subject, text }) {
-  const response = await fetch(
+	const response = await fetch(
 	"http://127.0.0.1:2525/api/email/send",
 	{
-	  method: "POST",
-	  headers: {
+		method: "POST",
+		headers: {
 		"content-type": "application/json"
-	  },
-	  body: JSON.stringify({
-	  from: "Fargo Small Engine Repair <adam@fargosmallenginerepair.com>",
+		},
+		body: JSON.stringify({
+		from: "Fargo Small Engine Repair <adam@fargosmallenginerepair.com>",
 		to: [to],
 		replyTo,
 		subject,
 		text
-	  }),
-	  signal: AbortSignal.timeout(30000)
+		}),
+		signal: AbortSignal.timeout(30000)
 	}
-  );
+	);
 
-  let result;
+	let result;
 
-  try {
+	try {
 	result = await response.json();
-  } catch {
+	} catch {
 	throw new Error(`Email gateway returned HTTP ${response.status}`);
-  }
+	}
 
-  if (!response.ok || !result.success) {
+	if (!response.ok || !result.success) {
 	throw new Error(result.error || `Email gateway returned HTTP ${response.status}`);
-  }
+	}
 
-  return result;
+	return result;
 }
 
 app.post("/api/contact", async (req, res) => {
-  const { name, email, message, productName, productType, productSku } = req.body;
+	const { name, email, message, productName, productType, productSku } = req.body;
 
-  if (!name || !email || !message) {
+	if (!name || !email || !message) {
 	return res.status(400).json({
-	  error: "Missing required fields"
+		error: "Missing required fields"
 	});
-  }
+	}
 
-  const productInfo = productName && productType && productSku ? `\nProduct Name: ${productName}\nProduct SKU: ${productSku}\nProduct Type: ${productType}\n` : '';
+	const productInfo = productName && productType && productSku ? `\nProduct Name: ${productName}\nProduct SKU: ${productSku}\nProduct Type: ${productType}\n` : '';
 
-  const recipient = process.env.CONTACT_FORM_RECIPIENT_EMAIL;
+	const recipient = process.env.CONTACT_FORM_RECIPIENT_EMAIL;
 
-  if (!recipient) {
+	if (!recipient) {
 	console.error("CONTACT_FORM_RECIPIENT_EMAIL is not configured");
 
 	return res.status(500).json({
-	  error: "Email recipient not configured"
+		error: "Email recipient not configured"
 	});
-  }
+	}
 
 try {
 	const result = await sendEmail({
@@ -233,15 +233,22 @@ app.get('/api/inventory/:sku', async (req, res) => {
 
 		const [images] = await db.query(`
 			SELECT
-				id,
-				url,
-				sort_order,
-				is_primary,
-			  poster_url,
-				media_type
+					id,
+					url,
+					sort_order,
+					is_primary,
+					poster_url,
+					media_type
 			FROM inventory_images
 			WHERE inventory_id = ?
-			ORDER BY sort_order
+			ORDER BY
+					CASE
+							WHEN sort_order = 1 THEN 0
+							WHEN media_type = 'video' THEN 1
+							ELSE 2
+					END,
+					sort_order ASC,
+					id ASC;
 		`, [item.id]);
 
 		const [attributes] = await db.query(`
@@ -323,9 +330,9 @@ ${urls.map(url => `
 app.use(express.static(dist));
 
 app.use((req, res) => {
-  res.sendFile(path.join(dist, "index.html"));
+	res.sendFile(path.join(dist, "index.html"));
 });
 
 app.listen(port, "0.0.0.0", () => {
-  console.log(`Server listening on ${port}`);
+	console.log(`Server listening on ${port}`);
 });
