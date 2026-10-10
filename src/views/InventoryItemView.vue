@@ -258,7 +258,7 @@ async function submitForm() {
 									:src="mediaUrl(media.poster_url)"
 									:alt="''"
 								>
-								<span class="play-icon" aria-hidden="true">▶</span>
+								<span class="play-icon" aria-hidden="true"></span>
 							</template>
 							<img
 								v-else
@@ -552,15 +552,32 @@ async function submitForm() {
 }
 
 .play-icon {
-	position: absolute;
-	inset: 0;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	color: #fff;
-	font-size: 1.5rem;
-	text-shadow: 0 1px 4px #000;
-	pointer-events: none;
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    pointer-events: none;
+}
+
+.play-icon::before {
+    content: "";
+    grid-area: 1 / 1;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.8);
+    border: 0px solid white;
+}
+
+.play-icon::after {
+    content: "";
+    grid-area: 1 / 1;
+    width: 0;
+    height: 0;
+    border-top: 7px solid transparent;
+    border-bottom: 7px solid transparent;
+    border-left: 12px solid white;
+    transform: translateX(2px);
 }
 .pricetag {
 	width: 1em;
