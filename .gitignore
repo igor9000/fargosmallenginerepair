@@ -43,3 +43,4 @@ playwright-report/
 .env
 fser.sublime-project
 fser.sublime-workspace
+query.cjs
