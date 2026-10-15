@@ -1,12 +1,6 @@
 <template>
-	<main class="container py-5">
-		<h1>Admin Dashboard</h1>
-		<p>Authenticated successfully.</p>
-
-		<button class="btn btn-outline-danger" @click="logout">
-			Log Out
-		</button>
-	</main>
+	<h1>Admin Dashboard</h1>
+	<p>Select a section from the navigation.</p>
 </template>
 
 <script setup>

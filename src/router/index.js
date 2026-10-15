@@ -50,7 +50,36 @@ const router = createRouter({
 			name: 'admin',
 			component: () => import('../views/admin/AdminView.vue'),
 			meta: { requiresAdmin: true }
-		}
+		},
+
+{
+	path: '/admin',
+	component: () => import('../views/admin/AdminLayout.vue'),
+	meta: { requiresAdmin: true },
+	children: [
+		{
+			path: '',
+			name: 'admin',
+			component: () => import('../views/admin/AdminView.vue')
+		},
+		...[
+			'brands',
+			'customers',
+			'inventory',
+			'inventory-attribute-values',
+			'inventory-attributes',
+			'inventory-images',
+			'inventory-types',
+			'service-tickets'
+		].map(table => ({
+			path: table,
+			name: `admin-${table}`,
+			component: () => import('../views/admin/AdminPlaceholder.vue'),
+			props: { table }
+		}))
+	]
+}
+
 	],
 })
 
