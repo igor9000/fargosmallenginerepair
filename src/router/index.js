@@ -39,8 +39,46 @@ const router = createRouter({
 			meta: {
 				showFooterCTA: false
 			}
+		},
+		{
+			path: '/admin/login',
+			name: 'admin-login',
+			component: () => import('../views/admin/AdminLoginView.vue')
+		},
+		{
+			path: '/admin',
+			name: 'admin',
+			component: () => import('../views/admin/AdminView.vue'),
+			meta: { requiresAdmin: true }
 		}
 	],
 })
+
+router.beforeEach(async (to) => {
+	if (!to.meta.requiresAdmin && to.name !== 'admin-login') {
+		return true;
+  	}
+
+  	try {
+		const response = await fetch('/api/admin/session', {
+			credentials: 'same-origin'
+		});
+
+		if (response.ok) {
+			if (to.name === 'admin-login') {
+				return { name: 'admin' };
+			}
+			return true;
+		}
+	} catch {
+		// Treat network errors as unauthenticated.
+	}
+
+	if (to.meta.requiresAdmin) {
+		return { name: 'admin-login' };
+	}
+
+	return true;
+});
 
 export default router

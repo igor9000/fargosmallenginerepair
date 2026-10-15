@@ -23,9 +23,13 @@
   },
   "dependencies": {
     "@unhead/vue": "^3.4.1",
+    "bcryptjs": "^3.0.3",
     "bootstrap": "^5.3.8",
     "dotenv": "^18.0.5",
     "express": "^5.2.1",
+    "express-mysql-session": "^3.0.3",
+    "express-rate-limit": "^8.7.1",
+    "express-session": "^1.19.0",
     "knex": "^3.3.0",
     "migrate": "^2.1.0",
     "mysql2": "^3.24.4",
