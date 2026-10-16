@@ -2,10 +2,6 @@ require('dotenv').config();
 const express = require("express");
 const path = require("path");
 const mysql = require("mysql2/promise");
-const session = require('express-session');
-const MySQLStore = require('express-mysql-session')(session);
-const bcrypt = require('bcryptjs');
-const { rateLimit } = require('express-rate-limit');
 
 
 const app = express();
@@ -25,109 +21,80 @@ const db = mysql.createPool({
 	connectionLimit: 10
 });
 
-// authentication sessions
-const sessionStore = new MySQLStore({
-  host: process.env.DB_HOST,
-  port: Number(process.env.DB_PORT || 3306),
-  user: process.env.DB_USER,
-  password: process.env.DB_PASSWORD,
-  database: process.env.DB_NAME
+
+const createAdminRouter = require('./src/api/admin/index.cjs');
+
+app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
+
+app.use('/api/admin', createAdminRouter({ db }));
+
+
+
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
 });
 
-if (!process.env.ADMIN_PASSWORD_HASH || !process.env.SESSION_SECRET) {
-  throw new Error('Admin authentication is not configured');
-}
 
-app.set('trust proxy', 1);
 
-app.use(session({
-  name: 'fms_admin',
-  secret: process.env.SESSION_SECRET,
-  store: sessionStore,
-  resave: false,
-  saveUninitialized: false,
-  cookie: {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict',
-    maxAge: 8 * 60 * 60 * 1000
-  }
-}));
 
-function requireAdmin(req, res, next) {
-  if (req.session?.isAdmin === true) {
-    return next();
-  }
 
-  return res.status(401).json({
-    error: 'Unauthorized'
-  });
-}
 
-// Reject cross-origin requests that could modify admin state.
-function requireSameOrigin(req, res, next) {
-  const origin = req.get('origin');
-  const expectedOrigin = process.env.APP_ORIGIN;
 
-  if (!expectedOrigin || origin !== expectedOrigin) {
-    return res.status(403).json({ error: 'Forbidden' });
-  }
 
-  next();
-}
 
-const loginLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  limit: 5,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false
-});
 
-app.post('/api/admin/login', loginLimiter, requireSameOrigin, async (req, res, next) => {
-  try {
-    const password = req.body?.password;
-    if (typeof password !== 'string' || password.length > 1024) {
-      return res.status(400).json({ error: 'Invalid request' });
-    }
 
-    const valid = await bcrypt.compare(
-      password,
-      process.env.ADMIN_PASSWORD_HASH
-    );
 
-    if (!valid) {
-      return res.status(401).json({
-        error: 'Invalid credentials'
-      });
-    }
 
-    req.session.regenerate((err) => {
-      if (err) return next(err);
 
-      req.session.isAdmin = true;
 
-      req.session.save((err) => {
-        if (err) return next(err);
-        res.json({ authenticated: true });
-      });
-    });
-  } catch (err) {
-    next(err);
-  }
-});
 
-app.get('/api/admin/session', requireAdmin, (req, res) => {
-  res.json({ authenticated: true });
-});
 
-app.post('/api/admin/logout', requireSameOrigin, requireAdmin, (req, res, next) => {
-  req.session.destroy((err) => {
-    if (err) return next(err);
 
-    res.clearCookie('fms_admin', { path: '/' });
-    res.json({ authenticated: false });
-  });
-});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
