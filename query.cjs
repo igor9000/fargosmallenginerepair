@@ -17,16 +17,21 @@ knex.raw('SHOW TABLES').then(
 
 
 
-knex.raw('DESCRIBE inventory;').then(
+knex.raw('DESCRIBE inventory_attributes;').then(
 		r=>console.table(r[0])
 	).catch(console.error)
 	.finally(()=>knex.destroy());
-//jSm!-74W:5$R
 
-	knex.raw('SELECT * FROM inventory;').then(
+	knex.raw('DESCRIBE inventory_attribute_values;').then(
 		r=>console.table(r[0])
 	).catch(console.error)
 	.finally(()=>knex.destroy());
+
+	// knex.raw('SELECT * FROM inventory;').then(
+	// 	r=>console.table(r[0])
+	// ).catch(console.error)
+	// .finally(()=>knex.destroy());
+
 
 /*
 knex.raw('SELECT sku, pending, active FROM inventory;').then(
