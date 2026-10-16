@@ -118,166 +118,324 @@ module.exports = function({ db }) {
 
 
 
-// inventory	
-router.get('/inventory', requireAdmin, async (req, res) => {
-	try {
-		const [rows] = await db.query(`
-			SELECT
-				i.id,
-				i.sku,
-				i.name,
-				i.price,
-				i.active,
-				i.pending,
-				i.featured,
-				i.clearance,
-				i.inventory_type_id,
-				i.brand_id,
-				it.name AS type_name,
-				b.name AS brand_name
-			FROM inventory i
-			LEFT JOIN inventory_types it
-				ON i.inventory_type_id = it.id
-			LEFT JOIN brands b
-				ON i.brand_id = b.id
-			ORDER BY i.id DESC
-		`);
-
-		res.json(rows);
-	} catch (error) {
-		console.error('Admin inventory error:', error);
-		res.status(500).json({ error: 'Unable to load inventory' });
-	}
-});
-
-router.patch(
-	'/inventory/:id',
-	requireSameOrigin,
-	requireAdmin,
-	async (req, res) => {
+	// inventory	
+	router.get('/inventory', requireAdmin, async (req, res) => {
 		try {
-			const id = Number(req.params.id);
-			const { name, price, active, pending, featured, clearance } = req.body ?? {};
+			const [rows] = await db.query(`
+				SELECT
+					i.id,
+					i.sku,
+					i.name,
+					i.price,
+					i.active,
+					i.pending,
+					i.featured,
+					i.clearance,
+					i.inventory_type_id,
+					i.brand_id,
+					it.name AS type_name,
+					b.name AS brand_name
+				FROM inventory i
+				LEFT JOIN inventory_types it
+					ON i.inventory_type_id = it.id
+				LEFT JOIN brands b
+					ON i.brand_id = b.id
+				ORDER BY i.id DESC
+			`);
 
-			if (!Number.isSafeInteger(id) || id < 1 ||
-					typeof name !== 'string' || !name.trim() ||
-					name.length > 255 ||
-					(typeof price !== 'number' && typeof price !== 'string') ||
-					price === '' || price === null ||
-					!Number.isFinite(Number(price)) ||
-					Number(price) < 0 || Number(price) > 99999999.99 ||
-					![active, pending, featured, clearance].every(v =>
-						typeof v === 'boolean'
-					)) {
+			res.json(rows);
+		} catch (error) {
+			console.error('Admin inventory error:', error);
+			res.status(500).json({ error: 'Unable to load inventory' });
+		}
+	});
+
+	router.patch(
+		'/inventory/:id',
+		requireSameOrigin,
+		requireAdmin,
+		async (req, res) => {
+			try {
+				const id = Number(req.params.id);
+				const { name, price, active, pending, featured, clearance } = req.body ?? {};
+
+				if (!Number.isSafeInteger(id) || id < 1 ||
+						typeof name !== 'string' || !name.trim() ||
+						name.length > 255 ||
+						(typeof price !== 'number' && typeof price !== 'string') ||
+						price === '' || price === null ||
+						!Number.isFinite(Number(price)) ||
+						Number(price) < 0 || Number(price) > 99999999.99 ||
+						![active, pending, featured, clearance].every(v =>
+							typeof v === 'boolean'
+						)) {
+					return res.status(400).json({ error: 'Invalid inventory data' });
+				}
+
+				const [result] = await db.query(`
+					UPDATE inventory
+					SET name = ?,
+							price = ?,
+							active = ?,
+							pending = ?,
+							featured = ?,
+							clearance = ?
+					WHERE id = ?
+				`, [
+					name.trim(),
+					Number(price),
+					Number(active),
+					Number(pending),
+					Number(featured),
+					Number(clearance),
+					id
+				]);
+
+				if (!result.affectedRows) {
+					return res.status(404).json({ error: 'Item not found' });
+				}
+
+				res.json({ success: true });
+			} catch (error) {
+				console.error('Inventory update error:', error);
+				res.status(500).json({ error: 'Unable to update inventory' });
+			}
+		}
+	);
+
+	router.get('/inventory/options', async (req, res, next) => {
+		try {
+			const [[brands], [types], [attributes]] = await Promise.all([
+				db.query('SELECT id, name FROM brands ORDER BY name'),
+				db.query('SELECT id, name FROM inventory_types ORDER BY name'),
+				db.query(`
+					SELECT id, name, slug, data_type, unit, sort_order
+					FROM inventory_attributes
+					ORDER BY sort_order, name
+				`)
+			]);
+
+			res.json({ brands, types, attributes });
+		} catch (err) {
+			next(err);
+		}
+	});
+
+
+
+
+	router.post('/inventory', async (req, res, next) => {
+		let connection;
+
+		try {
+			const {
+				sku, name, description, price, slug,
+				inventory_type_id, brand_id,
+				active, pending, featured, clearance,
+				images = [], attributes = []
+			} = req.body ?? {};
+
+			const validId = value =>
+				Number.isSafeInteger(Number(value)) && Number(value) > 0;
+
+			const validFlag = value => typeof value === 'boolean';
+
+			const validFilename = value =>
+				typeof value === 'string' &&
+				value.length > 0 &&
+				value.length <= 255 &&
+				!/[\\/]/.test(value) &&
+				value !== '.' &&
+				value !== '..';
+
+			if (
+				typeof sku !== 'string' || !sku.trim() || sku.length > 255 ||
+				typeof name !== 'string' || !name.trim() || name.length > 255 ||
+				typeof description !== 'string' ||
+				typeof slug !== 'string' || slug.length > 255 ||
+				!validId(inventory_type_id) ||
+				(brand_id !== null && !validId(brand_id)) ||
+				(price !== null && (
+					!(/^\d{1,8}(\.\d{1,2})?$/.test(String(price)))
+				)) ||
+				![active, pending, featured, clearance].every(validFlag) ||
+				!Array.isArray(images) ||
+				!Array.isArray(attributes) ||
+				images.length > 50 ||
+				attributes.length > 100
+			) {
 				return res.status(400).json({ error: 'Invalid inventory data' });
 			}
 
-			const [result] = await db.query(`
-				UPDATE inventory
-				SET name = ?,
-						price = ?,
-						active = ?,
-						pending = ?,
-						featured = ?,
-						clearance = ?
-				WHERE id = ?
+			// Validate media before touching the database.
+			const primaryImages = images.filter(image => image.is_primary);
+
+			if (
+				primaryImages.length > 1 ||
+				images.some(image =>
+					!validFilename(image.url) ||
+					!['image', 'video'].includes(image.media_type) ||
+					typeof image.comment !== 'string' ||
+					image.comment.length > 255 ||
+					(image.poster_url != null &&
+						image.poster_url !== '' &&
+						!validFilename(image.poster_url)) ||
+					(image.is_primary && image.media_type !== 'image')
+				)
+			) {
+				return res.status(400).json({ error: 'Invalid media data' });
+			}
+
+			if (
+				images.some(image => image.media_type === 'image') &&
+				primaryImages.length !== 1
+			) {
+				return res.status(400).json({
+					error: 'Select one primary image'
+				});
+			}
+
+			// Validate attribute IDs and text values.
+			const attributeIds = new Set();
+
+			for (const attribute of attributes) {
+				if (
+					!validId(attribute.id) ||
+					typeof attribute.value !== 'string' ||
+					attribute.value.length > 10000 ||
+					attributeIds.has(Number(attribute.id))
+				) {
+					return res.status(400).json({
+						error: 'Invalid attribute data'
+					});
+				}
+
+				attributeIds.add(Number(attribute.id));
+			}
+
+			connection = await db.getConnection();
+			await connection.beginTransaction();
+
+			// Verify the submitted attributes actually exist.
+			if (attributeIds.size) {
+				const ids = [...attributeIds];
+
+				const [definitions] = await connection.query(
+					'SELECT id, data_type FROM inventory_attributes WHERE id IN (?)',
+					[ids]
+				);
+
+				if (definitions.length !== ids.length) {
+					const err = new Error('Unknown inventory attribute');
+					err.status = 400;
+					throw err;
+				}
+
+				const definitionsById = new Map(
+					definitions.map(row => [Number(row.id), row])
+				);
+
+				for (const attribute of attributes) {
+					const type = definitionsById.get(Number(attribute.id)).data_type;
+					const value = attribute.value.trim();
+
+					if (
+						(type === 'number' &&
+							(!value || !Number.isFinite(Number(value)))) ||
+						(type === 'boolean' &&
+							!['true', 'false'].includes(value))
+					) {
+						const err = new Error('Invalid attribute value');
+						err.status = 400;
+						throw err;
+					}
+				}
+			}
+
+			// 1. Create the inventory item.
+			const [result] = await connection.query(`
+				INSERT INTO inventory (
+					sku, name, description, price, slug,
+					inventory_type_id, brand_id,
+					active, pending, featured, clearance
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 			`, [
+				sku.trim(),
 				name.trim(),
-				Number(price),
+				description,
+				price,
+				slug,
+				Number(inventory_type_id),
+				brand_id === null ? null : Number(brand_id),
 				Number(active),
 				Number(pending),
 				Number(featured),
-				Number(clearance),
-				id
+				Number(clearance)
 			]);
 
-			if (!result.affectedRows) {
-				return res.status(404).json({ error: 'Item not found' });
+			const inventoryId = result.insertId;
+
+			// 2. Save media filenames in the specified order.
+			for (const [index, image] of images.entries()) {
+				await connection.query(`
+					INSERT INTO inventory_images (
+						inventory_id, url, sort_order,
+						is_primary, comment, media_type, poster_url
+					) VALUES (?, ?, ?, ?, ?, ?, ?)
+				`, [
+					inventoryId,
+					image.url,
+					index + 1,
+					Number(image.is_primary),
+					image.comment,
+					image.media_type,
+					image.poster_url || null
+				]);
 			}
 
-			res.json({ success: true });
-		} catch (error) {
-			console.error('Inventory update error:', error);
-			res.status(500).json({ error: 'Unable to update inventory' });
+			// 3. Save nonempty attribute values.
+			for (const attribute of attributes) {
+				if (!attribute.value.trim()) continue;
+
+				await connection.query(`
+					INSERT INTO inventory_attribute_values (
+						inventory_id, attribute_id, value
+					) VALUES (?, ?, ?)
+				`, [
+					inventoryId,
+					Number(attribute.id),
+					attribute.value.trim()
+				]);
+			}
+
+			await connection.commit();
+
+			res.status(201).json({ id: inventoryId });
+		} catch (err) {
+			if (connection) await connection.rollback();
+
+			if (err.code === 'ER_DUP_ENTRY') {
+				return res.status(409).json({
+					error: 'SKU already exists'
+				});
+			}
+
+			if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+				return res.status(400).json({
+					error: 'Invalid brand, type, or attribute'
+				});
+			}
+
+			if (err.status === 400) {
+				return res.status(400).json({ error: err.message });
+			}
+
+			next(err);
+		} finally {
+			if (connection) connection.release();
 		}
-	}
-);
+	});
 
-
-router.get('/inventory/options', async (req, res, next) => {
-	try {
-		const [brands] = await db.query(
-			'SELECT id, name FROM brands ORDER BY name'
-		);
-		const [types] = await db.query(
-			'SELECT id, name FROM inventory_types ORDER BY name'
-		);
-
-		res.json({ brands, types });
-	} catch (err) {
-		next(err);
-	}
-});
-
-router.post('/inventory', async (req, res, next) => {
-	try {
-		const {
-			sku, name, description, price, slug,
-			inventory_type_id, brand_id,
-			active, pending, featured, clearance
-		} = req.body ?? {};
-
-		const validId = value =>
-			Number.isSafeInteger(Number(value)) && Number(value) > 0;
-
-		const validFlag = value => typeof value === 'boolean';
-
-		if (
-			typeof sku !== 'string' || !sku.trim() || sku.length > 255 ||
-			typeof name !== 'string' || !name.trim() || name.length > 255 ||
-			typeof description !== 'string' ||
-			typeof slug !== 'string' || slug.length > 255 ||
-			!validId(inventory_type_id) ||
-			(brand_id !== null && !validId(brand_id)) ||
-			(price !== null && (
-				price === '' || !/^\d{1,8}(\.\d{1,2})?$/.test(String(price))
-			)) ||
-			![active, pending, featured, clearance].every(validFlag)
-		) {
-			return res.status(400).json({ error: 'Invalid inventory data' });
-		}
-
-		const [result] = await db.query(`
-			INSERT INTO inventory (
-				sku, name, description, price, slug,
-				inventory_type_id, brand_id,
-				active, pending, featured, clearance
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		`, [
-			sku.trim(),
-			name.trim(),
-			description,
-			price,
-			slug,
-			Number(inventory_type_id),
-			brand_id === null ? null : Number(brand_id),
-			Number(active),
-			Number(pending),
-			Number(featured),
-			Number(clearance)
-		]);
-
-		res.status(201).json({ id: result.insertId });
-	} catch (err) {
-		if (err.code === 'ER_DUP_ENTRY') {
-			return res.status(409).json({ error: 'SKU already exists' });
-		}
-		if (err.code === 'ER_NO_REFERENCED_ROW_2') {
-			return res.status(400).json({ error: 'Invalid brand or type' });
-		}
-		next(err);
-	}
-});
 
 
 
