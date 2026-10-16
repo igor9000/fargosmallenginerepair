@@ -8,6 +8,7 @@
 2. tips pages
 3. Make separate inventory URLs for each equipment type
 4. database log contact requests
+5. Add a "Sold" banner to inactive things so that people who have them book marked know theyre gone and/or they dont link-rot from external sources
 
 
 
