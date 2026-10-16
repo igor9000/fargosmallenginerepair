@@ -23,7 +23,7 @@ knex.raw('DESCRIBE inventory;').then(
 	.finally(()=>knex.destroy());
 //jSm!-74W:5$R
 
-	knex.raw('SELECT * FROM sessions;').then(
+	knex.raw('SELECT * FROM inventory;').then(
 		r=>console.table(r[0])
 	).catch(console.error)
 	.finally(()=>knex.destroy());
