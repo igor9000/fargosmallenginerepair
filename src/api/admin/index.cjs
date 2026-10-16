@@ -437,6 +437,267 @@ module.exports = function({ db }) {
 	});
 
 
+	router.get('/inventory/:id', async (req, res, next) => {
+		try {
+			const id = Number(req.params.id);
+
+			if (!Number.isSafeInteger(id) || id < 1) {
+				return res.status(400).json({ error: 'Invalid inventory ID' });
+			}
+
+			const [[items], [images], [attributes]] = await Promise.all([
+				db.query('SELECT * FROM inventory WHERE id = ?', [id]),
+				db.query(`
+					SELECT id, url, comment, media_type,
+						poster_url, sort_order, is_primary
+					FROM inventory_images
+					WHERE inventory_id = ?
+					ORDER BY sort_order, id
+				`, [id]),
+				db.query(`
+					SELECT attribute_id AS id, value
+					FROM inventory_attribute_values
+					WHERE inventory_id = ?
+				`, [id])
+			]);
+
+			if (!items.length) {
+				return res.status(404).json({ error: 'Inventory item not found' });
+			}
+
+			res.json({
+				item: items[0],
+				images,
+				attributes
+			});
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	
+	router.put('/inventory/:id', async (req, res, next) => {
+		let connection;
+
+		try {
+			const id = Number(req.params.id);
+			const {
+				sku, name, description, price, slug,
+				inventory_type_id, brand_id,
+				active, pending, featured, clearance,
+				images, attributes
+			} = req.body ?? {};
+
+			const validId = value =>
+				Number.isSafeInteger(Number(value)) && Number(value) > 0;
+
+			const validFilename = value =>
+				typeof value === 'string' &&
+				value.length > 0 &&
+				value.length <= 255 &&
+				!/[\\/]/.test(value) &&
+				value !== '.' &&
+				value !== '..';
+
+			const validPrice = value =>
+				value === null ||
+				(typeof value === 'string' || typeof value === 'number') &&
+				/^\d{1,8}(\.\d{1,2})?$/.test(String(value));
+
+			if (
+				!validId(id) ||
+				typeof sku !== 'string' || !sku.trim() || sku.length > 255 ||
+				typeof name !== 'string' || !name.trim() || name.length > 255 ||
+				typeof description !== 'string' ||
+				typeof slug !== 'string' || slug.length > 255 ||
+				!validPrice(price) ||
+				!validId(inventory_type_id) ||
+				(brand_id !== null && !validId(brand_id)) ||
+				![active, pending, featured, clearance].every(
+					value => typeof value === 'boolean'
+				) ||
+				!Array.isArray(images) || images.length > 50 ||
+				!Array.isArray(attributes) || attributes.length > 100
+			) {
+				return res.status(400).json({ error: 'Invalid inventory data' });
+			}
+
+			const primaryImages = images.filter(image => image.is_primary);
+
+			if (
+				images.some(image =>
+					!validFilename(image.url) ||
+					!['image', 'video'].includes(image.media_type) ||
+					typeof image.comment !== 'string' ||
+					image.comment.length > 255 ||
+					(image.poster_url != null &&
+						image.poster_url !== '' &&
+						!validFilename(image.poster_url)) ||
+					(image.is_primary && image.media_type !== 'image')
+				) ||
+				primaryImages.length > 1 ||
+				(images.some(image => image.media_type === 'image') &&
+					primaryImages.length !== 1)
+			) {
+				return res.status(400).json({ error: 'Invalid media data' });
+			}
+
+			const attributeIds = new Set();
+
+			for (const attribute of attributes) {
+				if (
+					!validId(attribute.id) ||
+					typeof attribute.value !== 'string' ||
+					attribute.value.length > 10000 ||
+					attributeIds.has(Number(attribute.id))
+				) {
+					return res.status(400).json({ error: 'Invalid attribute data' });
+				}
+
+				attributeIds.add(Number(attribute.id));
+			}
+
+			connection = await db.getConnection();
+			await connection.beginTransaction();
+
+			const [existing] = await connection.query(
+				'SELECT id FROM inventory WHERE id = ? FOR UPDATE',
+				[id]
+			);
+
+			if (!existing.length) {
+				const err = new Error('Inventory item not found');
+				err.status = 404;
+				throw err;
+			}
+
+			if (attributeIds.size) {
+				const [definitions] = await connection.query(
+					'SELECT id, data_type FROM inventory_attributes WHERE id IN (?)',
+					[[...attributeIds]]
+				);
+
+				if (definitions.length !== attributeIds.size) {
+					const err = new Error('Unknown inventory attribute');
+					err.status = 400;
+					throw err;
+				}
+
+				const types = new Map(
+					definitions.map(row => [Number(row.id), row.data_type])
+				);
+
+				for (const attribute of attributes) {
+					const value = attribute.value.trim();
+					const type = types.get(Number(attribute.id));
+
+					if (
+						(type === 'number' && value &&
+							!Number.isFinite(Number(value))) ||
+						(type === 'boolean' && value &&
+							!['true', 'false'].includes(value))
+					) {
+						const err = new Error('Invalid attribute value');
+						err.status = 400;
+						throw err;
+					}
+				}
+			}
+
+			await connection.query(`
+				UPDATE inventory SET
+					sku = ?, name = ?, description = ?, price = ?,
+					slug = ?, inventory_type_id = ?, brand_id = ?,
+					active = ?, pending = ?, featured = ?, clearance = ?
+				WHERE id = ?
+			`, [
+				sku.trim(),
+				name.trim(),
+				description,
+				price,
+				slug,
+				Number(inventory_type_id),
+				brand_id === null ? null : Number(brand_id),
+				Number(active),
+				Number(pending),
+				Number(featured),
+				Number(clearance),
+				id
+			]);
+
+			// Replace media records, not physical files.
+			await connection.query(
+				'DELETE FROM inventory_images WHERE inventory_id = ?',
+				[id]
+			);
+
+			for (const [index, image] of images.entries()) {
+				await connection.query(`
+					INSERT INTO inventory_images (
+						inventory_id, url, sort_order, is_primary,
+						comment, media_type, poster_url
+					) VALUES (?, ?, ?, ?, ?, ?, ?)
+				`, [
+					id,
+					image.url,
+					index + 1,
+					Number(image.is_primary),
+					image.comment,
+					image.media_type,
+					image.poster_url || null
+				]);
+			}
+
+			// Replace existing attribute values.
+			await connection.query(
+				'DELETE FROM inventory_attribute_values WHERE inventory_id = ?',
+				[id]
+			);
+
+			for (const attribute of attributes) {
+				if (!attribute.value.trim()) continue;
+
+				await connection.query(`
+					INSERT INTO inventory_attribute_values (
+						inventory_id, attribute_id, value
+					) VALUES (?, ?, ?)
+				`, [
+					id,
+					Number(attribute.id),
+					attribute.value.trim()
+				]);
+			}
+
+			await connection.commit();
+			res.json({ success: true, id });
+		} catch (err) {
+			if (connection) {
+				try {
+					await connection.rollback();
+				} catch (rollbackError) {
+					console.error('Inventory rollback failed:', rollbackError);
+				}
+			}
+
+			if (err.code === 'ER_DUP_ENTRY') {
+				return res.status(409).json({ error: 'SKU already exists' });
+			}
+
+			if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+				return res.status(400).json({ error: 'Invalid brand or type' });
+			}
+
+			if (err.status) {
+				return res.status(err.status).json({ error: err.message });
+			}
+
+			next(err);
+		} finally {
+			if (connection) connection.release();
+		}
+	});
+
+
 
 
 

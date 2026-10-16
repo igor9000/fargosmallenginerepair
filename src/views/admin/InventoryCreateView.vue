@@ -2,7 +2,7 @@
 <template>
 	<section class="container-fluid">
 		<div class="d-flex justify-content-between align-items-center mb-4">
-			<h1>Add Inventory</h1>
+			<h1>{{ isEditing ? 'Edit Inventory' : 'Add Inventory' }}</h1>
 			<RouterLink to="/admin/inventory" class="btn btn-outline-secondary">
 				Cancel
 			</RouterLink>
@@ -188,7 +188,7 @@
 			<div class="col-12 mt-4">
 				<button type="submit" class="btn btn-primary"
 					:disabled="saving || loading">
-					{{ saving ? 'Saving...' : 'Create Inventory Item' }}
+					{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Inventory Item' }}
 				</button>
 			</div>
 		</form>
@@ -196,10 +196,13 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
+import { ref, computed, onMounted } from 'vue';
+import { useRouter, useRoute } from 'vue-router';
 
 const router = useRouter();
+const route = useRoute();
+const isEditing = computed(() => Boolean(route.params.id));
+const inventoryId = computed(() => Number(route.params.id));
 
 const brands = ref([]);
 const types = ref([]);
@@ -310,6 +313,58 @@ onMounted(async () => {
 			attributeValues.value[attribute.id] =
 				attribute.slug === 'warranty' ? '30 days' : '';
 		}
+
+		
+		if (isEditing.value) {
+			if (!Number.isSafeInteger(inventoryId.value) ||
+				inventoryId.value < 1) {
+				throw new Error('Invalid inventory ID');
+			}
+
+			const response = await fetch(
+				`/api/admin/inventory/${inventoryId.value}`,
+				{ credentials: 'same-origin' }
+			);
+
+			if (!response.ok) {
+				throw new Error('Could not load inventory item');
+			}
+
+			const data = await response.json();
+			const existing = data.item;
+
+			item.value = {
+				sku: existing.sku,
+				name: existing.name,
+				description: existing.description ?? '',
+				price: existing.price ?? '',
+				slug: existing.slug,
+				inventory_type_id: existing.inventory_type_id,
+				brand_id: existing.brand_id,
+				active: Boolean(existing.active),
+				pending: Boolean(existing.pending),
+				featured: Boolean(existing.featured),
+				clearance: Boolean(existing.clearance),
+				images: data.images.map(image => ({
+					key: nextMediaKey++,
+					url: image.url,
+					comment: image.comment ?? '',
+					media_type: image.media_type,
+					poster_url: image.poster_url ?? '',
+					is_primary: Boolean(image.is_primary)
+				}))
+			};
+
+			// Editing must reflect stored values, not creation defaults.
+			for (const attribute of attributes.value) {
+				attributeValues.value[attribute.id] = '';
+			}
+
+			for (const attribute of data.attributes) {
+				attributeValues.value[attribute.id] = attribute.value ?? '';
+			}
+		}
+
 	} catch (err) {
 		error.value = err.message;
 	} finally {
@@ -348,12 +403,18 @@ async function save() {
 				}))
 		};
 
-		const response = await fetch('/api/admin/inventory', {
-			method: 'POST',
+		
+		const url = isEditing.value
+			? `/api/admin/inventory/${inventoryId.value}`
+			: '/api/admin/inventory';
+
+		const response = await fetch(url, {
+			method: isEditing.value ? 'PUT' : 'POST',
 			credentials: 'same-origin',
 			headers: { 'Content-Type': 'application/json' },
 			body: JSON.stringify(payload)
 		});
+
 
 		const data = await response.json();
 

@@ -62,13 +62,18 @@ const router = createRouter({
 					component: () => import('../views/admin/AdminView.vue')
 				},
 				{
-					path: '/admin/inventory',
+					path: 'inventory',
 					name: 'admin-inventory',
 					component: () => import('../views/admin/InventoryView.vue')
 				},
 				{
 					path: 'inventory/new',
 					name: 'admin-inventory-new',
+					component: () => import('../views/admin/InventoryCreateView.vue')
+				},
+				{
+					path: 'inventory/:id/edit',
+					name: 'admin-inventory-edit',
 					component: () => import('../views/admin/InventoryCreateView.vue')
 				},
 				...[
