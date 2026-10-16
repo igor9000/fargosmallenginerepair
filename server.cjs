@@ -30,9 +30,6 @@ app.use('/api/admin', createAdminRouter({ db }));
 
 
 
-app.use('/api', (req, res) => {
-  res.status(404).json({ error: 'API endpoint not found' });
-});
 
 
 
@@ -399,6 +396,9 @@ ${urls.map(url => `
 
 
 
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: 'API endpoint not found' });
+});
 
 app.use(express.static(dist));
 
