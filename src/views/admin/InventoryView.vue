@@ -4,6 +4,9 @@
 	<div class="d-flex justify-content-between align-items-center mb-4">
 	  <h1>Inventory</h1>
 	  <span>{{ filteredItems.length }} items</span>
+	  		<RouterLink to="/admin/inventory/new" class="btn btn-primary">
+			Add Inventory
+		</RouterLink>
 	</div>
 
 	<input

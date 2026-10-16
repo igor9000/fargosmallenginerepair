@@ -204,5 +204,84 @@ router.patch(
 );
 
 
+router.get('/inventory/options', async (req, res, next) => {
+	try {
+		const [brands] = await db.query(
+			'SELECT id, name FROM brands ORDER BY name'
+		);
+		const [types] = await db.query(
+			'SELECT id, name FROM inventory_types ORDER BY name'
+		);
+
+		res.json({ brands, types });
+	} catch (err) {
+		next(err);
+	}
+});
+
+router.post('/inventory', async (req, res, next) => {
+	try {
+		const {
+			sku, name, description, price, slug,
+			inventory_type_id, brand_id,
+			active, pending, featured, clearance
+		} = req.body ?? {};
+
+		const validId = value =>
+			Number.isSafeInteger(Number(value)) && Number(value) > 0;
+
+		const validFlag = value => typeof value === 'boolean';
+
+		if (
+			typeof sku !== 'string' || !sku.trim() || sku.length > 255 ||
+			typeof name !== 'string' || !name.trim() || name.length > 255 ||
+			typeof description !== 'string' ||
+			typeof slug !== 'string' || slug.length > 255 ||
+			!validId(inventory_type_id) ||
+			(brand_id !== null && !validId(brand_id)) ||
+			(price !== null && (
+				price === '' || !/^\d{1,8}(\.\d{1,2})?$/.test(String(price))
+			)) ||
+			![active, pending, featured, clearance].every(validFlag)
+		) {
+			return res.status(400).json({ error: 'Invalid inventory data' });
+		}
+
+		const [result] = await db.query(`
+			INSERT INTO inventory (
+				sku, name, description, price, slug,
+				inventory_type_id, brand_id,
+				active, pending, featured, clearance
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, [
+			sku.trim(),
+			name.trim(),
+			description,
+			price,
+			slug,
+			Number(inventory_type_id),
+			brand_id === null ? null : Number(brand_id),
+			Number(active),
+			Number(pending),
+			Number(featured),
+			Number(clearance)
+		]);
+
+		res.status(201).json({ id: result.insertId });
+	} catch (err) {
+		if (err.code === 'ER_DUP_ENTRY') {
+			return res.status(409).json({ error: 'SKU already exists' });
+		}
+		if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+			return res.status(400).json({ error: 'Invalid brand or type' });
+		}
+		next(err);
+	}
+});
+
+
+
+
+
 	return router;
 };
