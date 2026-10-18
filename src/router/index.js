@@ -76,9 +76,23 @@ const router = createRouter({
 					name: 'admin-inventory-edit',
 					component: () => import('../views/admin/InventoryCreateView.vue')
 				},
+				{
+					path: 'customers',
+					name: 'admin-customers',
+					component: () => import('../views/admin/CustomersView.vue')
+				},
+				{
+					path: 'customers/new',
+					name: 'admin-customers-new',
+					component: () => import('../views/admin/CustomerFormView.vue')
+				},
+				{
+					path: 'customers/:id/edit',
+					name: 'admin-customers-edit',
+					component: () => import('../views/admin/CustomerFormView.vue')
+				},
 				...[
 					'brands',
-					'customers',
 					'inventory-attribute-values',
 					'inventory-attributes',
 					'inventory-images',

@@ -475,7 +475,7 @@ module.exports = function({ db }) {
 		}
 	});
 
-	
+
 	router.put('/inventory/:id', async (req, res, next) => {
 		let connection;
 
@@ -696,6 +696,225 @@ module.exports = function({ db }) {
 			if (connection) connection.release();
 		}
 	});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	// Customer validation shared by create and update.
+	function validateCustomer(body) {
+		const fields = [
+			'first_name', 'last_name', 'address_1', 'city',
+			'state', 'zip', 'phone', 'email', 'notes'
+		];
+
+		const limits = {
+			first_name: 255,
+			last_name: 255,
+			address_1: 255,
+			city: 255,
+			state: 2,
+			zip: 10,
+			phone: 32,
+			email: 255
+		};
+
+		if (!body || typeof body !== 'object' || Array.isArray(body)) {
+			return { error: 'Invalid customer data' };
+		}
+
+		const externalId = String(body.external_id ?? '');
+
+		if (
+			!/^[1-9]\d*$/.test(externalId) ||
+			Number(externalId) > 4294967295
+		) {
+			return { error: 'External ID must be a positive unsigned integer' };
+		}
+
+		const customer = {
+			external_id: Number(externalId)
+		};
+
+		for (const field of fields) {
+			const value = body[field];
+
+			if (value !== null && value !== undefined &&
+				typeof value !== 'string') {
+				return { error: `Invalid ${field}` };
+			}
+
+			const trimmed = (value ?? '').trim();
+
+			if (limits[field] && trimmed.length > limits[field]) {
+				return { error: `${field} is too long` };
+			}
+
+			customer[field] = trimmed || null;
+		}
+
+		if (!customer.first_name) {
+			return { error: 'First name is required' };
+		}
+
+		if (customer.state && !/^[A-Za-z]{2}$/.test(customer.state)) {
+			return { error: 'State must be a two-letter abbreviation' };
+		}
+
+		if (customer.email &&
+			!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customer.email)) {
+			return { error: 'Invalid email address' };
+		}
+
+		return { customer };
+	}
+
+	const customerColumns = [
+		'external_id', 'first_name', 'last_name',
+		'address_1', 'city', 'state', 'zip',
+		'phone', 'email', 'notes'
+	];
+
+	function handleCustomerError(err, res, next) {
+		if (err.code === 'ER_DUP_ENTRY') {
+			return res.status(409).json({
+				error: 'A customer with that external ID already exists'
+			});
+		}
+
+		next(err);
+	}
+
+	// List customers.
+	router.get('/customers', async (req, res, next) => {
+		try {
+			const [rows] = await db.query(`
+				SELECT id, external_id, first_name, last_name,
+					address_1, city, state, zip, phone, email,
+					notes, created_at
+				FROM customers
+				ORDER BY last_name, first_name, id
+			`);
+
+			res.json(rows);
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	// Load one customer.
+	router.get('/customers/:id', async (req, res, next) => {
+		try {
+			const id = Number(req.params.id);
+
+			if (!Number.isSafeInteger(id) || id < 1) {
+				return res.status(400).json({ error: 'Invalid customer ID' });
+			}
+
+			const [rows] = await db.query(
+				'SELECT * FROM customers WHERE id = ?',
+				[id]
+			);
+
+			if (!rows.length) {
+				return res.status(404).json({ error: 'Customer not found' });
+			}
+
+			res.json(rows[0]);
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	// Create customer.
+	router.post('/customers', async (req, res, next) => {
+		const { customer, error } = validateCustomer(req.body);
+
+		if (error) {
+			return res.status(400).json({ error });
+		}
+
+		try {
+			const placeholders = customerColumns.map(() => '?').join(', ');
+
+			const [result] = await db.query(
+				`INSERT INTO customers (${customerColumns.join(', ')})
+					VALUES (${placeholders})`,
+				customerColumns.map(field => customer[field])
+			);
+
+			res.status(201).json({ id: result.insertId });
+		} catch (err) {
+			handleCustomerError(err, res, next);
+		}
+	});
+
+	// Update customer, including external_id.
+	router.put('/customers/:id', async (req, res, next) => {
+		const id = Number(req.params.id);
+
+		if (!Number.isSafeInteger(id) || id < 1) {
+			return res.status(400).json({ error: 'Invalid customer ID' });
+		}
+
+		const { customer, error } = validateCustomer(req.body);
+
+		if (error) {
+			return res.status(400).json({ error });
+		}
+
+		try {
+			const assignments = customerColumns
+				.map(field => `${field} = ?`)
+				.join(', ');
+
+			const [result] = await db.query(
+				`UPDATE customers SET ${assignments} WHERE id = ?`,
+				[
+					...customerColumns.map(field => customer[field]),
+					id
+				]
+			);
+
+			if (!result.affectedRows) {
+				return res.status(404).json({ error: 'Customer not found' });
+			}
+
+			res.json({ success: true, id });
+		} catch (err) {
+			handleCustomerError(err, res, next);
+		}
+	});
+
+
+
+
+
+
+
+
+
+
 
 
 
