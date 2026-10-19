@@ -1273,5 +1273,229 @@ module.exports = function({ db }) {
 
 
 
+
+
+
+
+	// Standard charge validation helpers.
+	function validChargeId(value) {
+		return /^[1-9]\d*$/.test(String(value)) &&
+			Number(value) <= 4294967295;
+	}
+
+	function validEffectiveDate(value) {
+		if (typeof value !== 'string' ||
+			!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+			return false;
+		}
+
+		const [year, month, day] = value.split('-').map(Number);
+		const date = new Date(0);
+
+		date.setUTCFullYear(year, month - 1, day);
+		date.setUTCHours(0, 0, 0, 0);
+
+		return date.getUTCFullYear() === year &&
+			date.getUTCMonth() === month - 1 &&
+			date.getUTCDate() === day;
+	}
+
+	function validChargeValue(value) {
+		return (typeof value === 'string' ||
+			typeof value === 'number') &&
+			/^\d{1,8}(\.\d{1,4})?$/.test(String(value));
+	}
+
+	function handleChargeError(err, res, next) {
+		if (err.code === 'ER_DUP_ENTRY') {
+			return res.status(409).json({
+				error: 'Charge or effective date already exists'
+			});
+		}
+
+		next(err);
+	}
+
+	// List standard charges with their currently effective rates.
+	router.get('/standard-charges', async (req, res, next) => {
+		try {
+			const [rows] = await db.query(`
+				SELECT
+					c.id,
+					c.name,
+					c.slug,
+					c.calculation_type,
+					c.unit,
+					c.active,
+					v.id AS version_id,
+					v.value AS current_value,
+					DATE_FORMAT(v.effective_date, '%Y-%m-%d')
+						AS effective_date
+				FROM standard_charges c
+				LEFT JOIN standard_charge_versions v
+					ON v.id = (
+						SELECT v2.id
+						FROM standard_charge_versions v2
+						WHERE v2.standard_charge_id = c.id
+							AND v2.effective_date <= CURRENT_DATE()
+						ORDER BY v2.effective_date DESC, v2.id DESC
+						LIMIT 1
+					)
+				ORDER BY c.name, c.id
+			`);
+
+			res.json(rows);
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	// Load one standard charge and its version history.
+	router.get('/standard-charges/:id', async (req, res, next) => {
+		const id = Number(req.params.id);
+
+		if (!validChargeId(req.params.id)) {
+			return res.status(400).json({ error: 'Invalid charge ID' });
+		}
+
+		try {
+			const [[charges], [versions]] = await Promise.all([
+				db.query(
+					'SELECT * FROM standard_charges WHERE id = ?',
+					[id]
+				),
+				db.query(`
+					SELECT
+						id,
+						value,
+						DATE_FORMAT(effective_date, '%Y-%m-%d')
+							AS effective_date,
+						created_at
+					FROM standard_charge_versions
+					WHERE standard_charge_id = ?
+					ORDER BY effective_date DESC, id DESC
+				`, [id])
+			]);
+
+			if (!charges.length) {
+				return res.status(404).json({
+					error: 'Standard charge not found'
+				});
+			}
+
+			res.json({
+				...charges[0],
+				versions
+			});
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	// Create a standard charge definition.
+	router.post('/standard-charges', async (req, res, next) => {
+		const {
+			name, slug, calculation_type, unit,
+			active = true
+		} = req.body ?? {};
+
+		if (
+			typeof name !== 'string' ||
+			!name.trim() ||
+			name.length > 100 ||
+			typeof slug !== 'string' ||
+			!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) ||
+			slug.length > 100 ||
+			!['percentage', 'unit_price'].includes(calculation_type) ||
+			(unit != null && (
+				typeof unit !== 'string' ||
+				unit.length > 30
+			)) ||
+			typeof active !== 'boolean'
+		) {
+			return res.status(400).json({
+				error: 'Invalid standard charge data'
+			});
+		}
+
+		try {
+			const [result] = await db.query(`
+				INSERT INTO standard_charges (
+					name, slug, calculation_type, unit, active
+				) VALUES (?, ?, ?, ?, ?)
+			`, [
+				name.trim(),
+				slug,
+				calculation_type,
+				unit?.trim() || null,
+				Number(active)
+			]);
+
+			res.status(201).json({
+				id: result.insertId
+			});
+		} catch (err) {
+			handleChargeError(err, res, next);
+		}
+	});
+
+	// Create a new effective-dated rate version.
+	router.post('/standard-charges/:id/versions', async (req, res, next) => {
+		const id = Number(req.params.id);
+		const { value, effective_date } = req.body ?? {};
+
+		if (!validChargeId(req.params.id)) {
+			return res.status(400).json({ error: 'Invalid charge ID' });
+		}
+
+		if (
+			!validChargeValue(value) ||
+			!validEffectiveDate(effective_date)
+		) {
+			return res.status(400).json({
+				error: 'Invalid rate or effective date'
+			});
+		}
+
+		try {
+			const [charges] = await db.query(
+				'SELECT id FROM standard_charges WHERE id = ?',
+				[id]
+			);
+
+			if (!charges.length) {
+				return res.status(404).json({
+					error: 'Standard charge not found'
+				});
+			}
+
+			const [result] = await db.query(`
+				INSERT INTO standard_charge_versions (
+					standard_charge_id,
+					value,
+					effective_date
+				) VALUES (?, ?, ?)
+			`, [
+				id,
+				String(value),
+				effective_date
+			]);
+
+			res.status(201).json({
+				id: result.insertId,
+				standard_charge_id: id
+			});
+		} catch (err) {
+			handleChargeError(err, res, next);
+		}
+	});
+
+
+
+
+
+
+
+
 	return router;
 };

@@ -106,6 +106,21 @@ const router = createRouter({
 					name: 'admin-service-tickets-edit',
 					component: () => import('../views/admin/ServiceTicketFormView.vue')
 				},
+				{
+					path: 'standard-charges',
+					name: 'admin-standard-charges',
+					component: () => import('../views/admin/StandardChargesView.vue')
+				},
+				{
+					path: 'standard-charges/new',
+					name: 'admin-standard-charges-new',
+					component: () => import('../views/admin/StandardChargeFormView.vue')
+				},
+				{
+					path: 'standard-charges/:id/edit',
+					name: 'admin-standard-charges-edit',
+					component: () => import('../views/admin/StandardChargeFormView.vue')
+				},
 				...[
 					'brands',
 					'inventory-attribute-values',

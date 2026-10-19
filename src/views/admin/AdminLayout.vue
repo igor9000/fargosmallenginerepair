@@ -20,9 +20,8 @@
 				<RouterLink to="/admin/inventory-types">Inventory Types</RouterLink>
 				<RouterLink to="/admin/inventory-images">Inventory Images</RouterLink>
 				<RouterLink to="/admin/inventory-attributes">Inventory Attributes</RouterLink>
-				<RouterLink to="/admin/inventory-attribute-values">
-					Attribute Values
-				</RouterLink>
+				<RouterLink to="/admin/inventory-attribute-values">Attribute Values</RouterLink>
+				<RouterLink to="/admin/standard-charges">Standard Charges</RouterLink>
 			</nav>
 
 			<button class="logout" @click="logout">Log Out</button>
