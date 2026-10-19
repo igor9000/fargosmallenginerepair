@@ -921,5 +921,218 @@ module.exports = function({ db }) {
 
 
 
+
+
+
+
+
+	// Validate data shared by create and update.
+	function validateServiceTicket(body) {
+		if (!body || typeof body !== 'object' || Array.isArray(body)) {
+			return { error: 'Invalid service ticket data' };
+		}
+
+		const validUnsignedId = value =>
+			/^[1-9]\d*$/.test(String(value ?? '')) &&
+			Number(value) <= 4294967295;
+
+		if (!validUnsignedId(body.ticket_number)) {
+			return { error: 'Ticket number must be a positive unsigned integer' };
+		}
+
+		if (!validUnsignedId(body.customer_id)) {
+			return { error: 'Select a valid customer' };
+		}
+
+		for (const field of ['description', 'diagnostic_notes', 'service_notes']) {
+			if (
+				body[field] !== null &&
+				body[field] !== undefined &&
+				typeof body[field] !== 'string'
+			) {
+				return { error: `Invalid ${field}` };
+			}
+		}
+
+		if (typeof body.completed !== 'boolean') {
+			return { error: 'Invalid completion status' };
+		}
+
+		return {
+			ticket: {
+				ticket_number: Number(body.ticket_number),
+				customer_id: Number(body.customer_id),
+				description: body.description?.trim() || null,
+				diagnostic_notes: body.diagnostic_notes?.trim() || null,
+				service_notes: body.service_notes?.trim() || null,
+				completed: body.completed
+			}
+		};
+	}
+
+	function handleServiceTicketError(err, res, next) {
+		if (err.code === 'ER_DUP_ENTRY') {
+			return res.status(409).json({
+				error: 'Ticket number already exists'
+			});
+		}
+
+		if (err.code === 'ER_NO_REFERENCED_ROW_2') {
+			return res.status(400).json({
+				error: 'Selected customer does not exist'
+			});
+		}
+
+		next(err);
+	}
+
+	// List tickets with customer details.
+	router.get('/service-tickets', async (req, res, next) => {
+		try {
+			const [rows] = await db.query(`
+				SELECT
+					t.id,
+					t.ticket_number,
+					t.customer_id,
+					t.token,
+					t.description,
+					t.created_at,
+					t.completed_at,
+					c.external_id AS customer_external_id,
+					c.first_name,
+					c.last_name
+				FROM service_tickets t
+				INNER JOIN customers c ON c.id = t.customer_id
+				ORDER BY t.created_at DESC, t.id DESC
+			`);
+
+			res.json(rows);
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	// Fetch one ticket.
+	router.get('/service-tickets/:id', async (req, res, next) => {
+		try {
+			const id = Number(req.params.id);
+
+			if (!Number.isSafeInteger(id) || id < 1) {
+				return res.status(400).json({ error: 'Invalid ticket ID' });
+			}
+
+			const [rows] = await db.query(
+				'SELECT * FROM service_tickets WHERE id = ?',
+				[id]
+			);
+
+			if (!rows.length) {
+				return res.status(404).json({ error: 'Ticket not found' });
+			}
+
+			res.json(rows[0]);
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	// Create ticket.
+	router.post('/service-tickets', async (req, res, next) => {
+		const { ticket, error } = validateServiceTicket(req.body);
+
+		if (error) {
+			return res.status(400).json({ error });
+		}
+
+		try {
+			const [result] = await db.query(`
+				INSERT INTO service_tickets (
+					ticket_number,
+					customer_id,
+					description,
+					diagnostic_notes,
+					service_notes,
+					completed_at
+				) VALUES (?, ?, ?, ?, ?, ?)
+			`, [
+				ticket.ticket_number,
+				ticket.customer_id,
+				ticket.description,
+				ticket.diagnostic_notes,
+				ticket.service_notes,
+				ticket.completed ? new Date() : null
+			]);
+
+			res.status(201).json({ id: result.insertId });
+		} catch (err) {
+			handleServiceTicketError(err, res, next);
+		}
+	});
+
+	// Update ticket.
+	router.put('/service-tickets/:id', async (req, res, next) => {
+		const id = Number(req.params.id);
+
+		if (!Number.isSafeInteger(id) || id < 1) {
+			return res.status(400).json({ error: 'Invalid ticket ID' });
+		}
+
+		const { ticket, error } = validateServiceTicket(req.body);
+
+		if (error) {
+			return res.status(400).json({ error });
+		}
+
+		try {
+			const [result] = await db.query(`
+				UPDATE service_tickets
+				SET
+					ticket_number = ?,
+					customer_id = ?,
+					description = ?,
+					diagnostic_notes = ?,
+					service_notes = ?,
+					completed_at = CASE
+						WHEN ? = 0 THEN NULL
+						WHEN completed_at IS NULL THEN CURRENT_TIMESTAMP
+						ELSE completed_at
+					END
+				WHERE id = ?
+			`, [
+				ticket.ticket_number,
+				ticket.customer_id,
+				ticket.description,
+				ticket.diagnostic_notes,
+				ticket.service_notes,
+				Number(ticket.completed),
+				id
+			]);
+
+			if (!result.affectedRows) {
+				return res.status(404).json({ error: 'Ticket not found' });
+			}
+
+			res.json({ success: true, id });
+		} catch (err) {
+			handleServiceTicketError(err, res, next);
+		}
+	});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	return router;
 };

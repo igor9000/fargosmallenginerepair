@@ -91,13 +91,27 @@ const router = createRouter({
 					name: 'admin-customers-edit',
 					component: () => import('../views/admin/CustomerFormView.vue')
 				},
+				{
+					path: 'service-tickets',
+					name: 'admin-service-tickets',
+					component: () => import('../views/admin/ServiceTicketsView.vue')
+				},
+				{
+					path: 'service-tickets/new',
+					name: 'admin-service-tickets-new',
+					component: () => import('../views/admin/ServiceTicketFormView.vue')
+				},
+				{
+					path: 'service-tickets/:id/edit',
+					name: 'admin-service-tickets-edit',
+					component: () => import('../views/admin/ServiceTicketFormView.vue')
+				},
 				...[
 					'brands',
 					'inventory-attribute-values',
 					'inventory-attributes',
 					'inventory-images',
-					'inventory-types',
-					'service-tickets'
+					'inventory-types'
 				].map(table => ({
 					path: table,
 					name: `admin-${table}`,
