@@ -954,8 +954,13 @@ module.exports = function({ db }) {
 			}
 		}
 
-		if (typeof body.completed !== 'boolean') {
-			return { error: 'Invalid completion status' };
+		if (![
+			'new',
+			'diagnostic_complete',
+			'services_complete',
+			'paid'
+		].includes(body.status)) {
+			return { error: 'Invalid ticket status' };
 		}
 
 		return {
@@ -965,7 +970,7 @@ module.exports = function({ db }) {
 				description: body.description?.trim() || null,
 				diagnostic_notes: body.diagnostic_notes?.trim() || null,
 				service_notes: body.service_notes?.trim() || null,
-				completed: body.completed
+				status: body.status
 			}
 		};
 	}
@@ -996,6 +1001,7 @@ module.exports = function({ db }) {
 					t.customer_id,
 					t.token,
 					t.description,
+					t.status,
 					t.created_at,
 					t.completed_at,
 					c.external_id AS customer_external_id,
@@ -1069,7 +1075,7 @@ module.exports = function({ db }) {
 		try {
 			connection = await db.getConnection();
 			await connection.beginTransaction();
-
+			
 			const [result] = await connection.query(`
 				INSERT INTO service_tickets (
 					ticket_number,
@@ -1077,15 +1083,19 @@ module.exports = function({ db }) {
 					description,
 					diagnostic_notes,
 					service_notes,
+					status,
 					completed_at
-				) VALUES (?, ?, ?, ?, ?, ?)
+				) VALUES (?, ?, ?, ?, ?, ?, ?)
 			`, [
 				ticket.ticket_number,
 				ticket.customer_id,
 				ticket.description,
 				ticket.diagnostic_notes,
 				ticket.service_notes,
-				ticket.completed ? new Date() : null
+				ticket.status,
+				ticket.status === 'services_complete'
+					? new Date()
+					: null
 			]);
 
 			await insertServiceMedia(connection, result.insertId, media);
@@ -1147,7 +1157,7 @@ module.exports = function({ db }) {
 				await connection.rollback();
 				return res.status(404).json({ error: 'Ticket not found' });
 			}
-
+		
 			await connection.query(`
 				UPDATE service_tickets
 				SET
@@ -1156,8 +1166,9 @@ module.exports = function({ db }) {
 					description = ?,
 					diagnostic_notes = ?,
 					service_notes = ?,
+					status = ?,
 					completed_at = CASE
-						WHEN ? = 0 THEN NULL
+						WHEN ? IN ('new', 'diagnostic_complete') THEN NULL
 						WHEN completed_at IS NULL THEN CURRENT_TIMESTAMP
 						ELSE completed_at
 					END
@@ -1168,7 +1179,8 @@ module.exports = function({ db }) {
 				ticket.description,
 				ticket.diagnostic_notes,
 				ticket.service_notes,
-				Number(ticket.completed),
+				ticket.status,
+				ticket.status,
 				id
 			]);
 

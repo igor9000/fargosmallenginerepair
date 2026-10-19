@@ -59,9 +59,9 @@
 						<td>
 							<span
 								class="badge"
-								:class="ticket.completed_at ? 'bg-success' : 'bg-warning text-dark'"
+								:class="ticket.status ? statuses[ticket.status].css : 'bg-danger text-light'"
 							>
-								{{ ticket.completed_at ? 'Completed' : 'Open' }}
+								{{ ticket.status ? statuses[ticket.status].name : 'Unknown' }}
 							</span>
 						</td>
 
@@ -93,6 +93,25 @@ const tickets = ref([]);
 const search = ref('');
 const loading = ref(true);
 const error = ref('');
+
+const statuses = {
+	new: {
+		name: 'New',
+		css: 'bg-secondary text-light'
+	},
+	diagnostic_complete: {
+		name: 'Diagnostic Complete',
+		css: 'bg-warning text-dark'
+	},
+	services_complete: {
+		name: 'Services Complete',
+		css: 'bg-info text-dark'
+	},
+	paid: {
+		name: 'Paid',
+		css: 'bg-success text-light'
+	}
+}
 
 function customerName(ticket) {
 	return [ticket.first_name, ticket.last_name]

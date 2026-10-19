@@ -124,7 +124,7 @@
 
 
 			<ServiceTicketChargesEditor
-				v-if="isEditing && !ticket.completed"
+				v-if="isEditing && ticket.status !== 'paid'"
 				:ticket-id="ticketId"
 			/>
 
@@ -134,21 +134,24 @@
 				</p>
 			</div>
 
-			<div class="col-12 mt-4">
-				<div class="form-check">
-					<input
-						v-model="ticket.completed"
-						type="checkbox"
-						class="form-check-input"
-						id="ticket-completed"
-					/>
-					<label class="form-check-label" for="ticket-completed">
-						Mark ticket completed
-					</label>
-				</div>
+			<div class="col-md-6 mt-4">
+				<label for="ticket-status" class="form-label">
+					Ticket Status
+				</label>
+
+				<select
+					id="ticket-status"
+					v-model="ticket.status"
+					class="form-select"
+				>
+					<option value="new">New</option>
+					<option value="diagnostic_complete">Diagnostic Complete</option>
+					<option value="services_complete">Services Complete</option>
+					<option value="paid">Paid</option>
+				</select>
 
 				<div class="form-text">
-					Uncheck to reopen a completed ticket.
+					Status controls what the customer can see.
 				</div>
 			</div>
 
@@ -207,7 +210,7 @@ const ticket = ref({
 	description: '',
 	diagnostic_notes: '',
 	service_notes: '',
-	completed: false
+	status: 'new'
 });
 
 
@@ -337,7 +340,7 @@ onMounted(async () => {
 				description: existing.description ?? '',
 				diagnostic_notes: existing.diagnostic_notes ?? '',
 				service_notes: existing.service_notes ?? '',
-				completed: Boolean(existing.completed_at)
+				status: existing.status ?? 'new'
 			};
 
 			token.value = existing.token;
