@@ -74,7 +74,7 @@
 				></textarea>
 			</div>
 
-			
+
 			<!-- Diagnostics -->
 			<div class="col-12 mt-4">
 				<h2 class="h4 mb-3">Diagnostics</h2>
@@ -88,6 +88,17 @@
 				></textarea>
 			</div>
 
+			<ServiceTicketMediaEditor
+				title="Diagnostic Media"
+				category="diagnostic"
+				:entries="categoryMedia('diagnostic')"
+				:get-media-url="mediaUrl"
+				@add="addMedia"
+				@remove="removeMedia"
+				@move="moveMedia"
+			/>
+
+
 			<!-- Service -->
 			<div class="col-12 mt-4">
 				<h2 class="h4 mb-3">Service Performed</h2>
@@ -100,6 +111,16 @@
 					placeholder="Work completed, parts replaced, testing performed..."
 				></textarea>
 			</div>
+
+			<ServiceTicketMediaEditor
+				title="Service Media"
+				category="service"
+				:entries="categoryMedia('service')"
+				:get-media-url="mediaUrl"
+				@add="addMedia"
+				@remove="removeMedia"
+				@move="moveMedia"
+			/>
 
 
 			<div class="col-12 mt-4">
@@ -148,6 +169,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import ServiceTicketMediaEditor from './ServiceTicketMediaEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -175,6 +197,70 @@ const ticket = ref({
 	service_notes: '',
 	completed: false
 });
+
+
+let nextMediaKey = 1;
+
+const media = ref([]);
+
+const mediaCategories = [
+	{ value: 'diagnostic', label: 'Diagnostic Media' },
+	{ value: 'service', label: 'Service Media' }
+];
+
+function addMedia(category) {
+	media.value.push({
+		key: nextMediaKey++,
+		filename: '',
+		media_type: 'image',
+		poster_filename: '',
+		comment: '',
+		category
+	});
+}
+
+function removeMedia(entry) {
+	const index = media.value.indexOf(entry);
+
+	if (index !== -1) {
+		media.value.splice(index, 1);
+	}
+}
+
+function moveMedia(entry, direction) {
+	const categoryEntries = media.value.filter(
+		item => item.category === entry.category
+	);
+
+	const index = categoryEntries.indexOf(entry);
+	const target = categoryEntries[index + direction];
+
+	if (!target) return;
+
+	const from = media.value.indexOf(entry);
+	const to = media.value.indexOf(target);
+
+	[media.value[from], media.value[to]] =
+		[media.value[to], media.value[from]];
+}
+
+function categoryMedia(category) {
+	return media.value.filter(entry => entry.category === category);
+}
+
+function mediaUrl(filename) {
+	if (!filename?.trim() || !token.value ||
+		!ticket.value.ticket_number) {
+		return null;
+	}
+
+	const folder = `${ticket.value.ticket_number}-${token.value}`;
+	const file = encodeURIComponent(filename.trim());
+
+	return `https://media.fargosmallenginerepair.com/service/${encodeURIComponent(folder)}/${file}`;
+}
+
+
 
 function customerName(customer) {
 	return [customer.first_name, customer.last_name]
@@ -245,6 +331,16 @@ onMounted(async () => {
 			token.value = existing.token;
 			createdAt.value = existing.created_at;
 			completedAt.value = existing.completed_at;
+
+			media.value = (existing.media ?? []).map(entry => ({
+				key: nextMediaKey++,
+				filename: entry.filename,
+				media_type: entry.media_type,
+				poster_filename: entry.poster_filename ?? '',
+				comment: entry.comment ?? '',
+				category: entry.category
+			}));
+
 		}
 	} catch (err) {
 		error.value = err.message;
@@ -269,7 +365,19 @@ async function save() {
 			method: isEditing.value ? 'PUT' : 'POST',
 			credentials: 'same-origin',
 			headers: { 'Content-Type': 'application/json' },
-			body: JSON.stringify(ticket.value)
+			body: JSON.stringify({
+				...ticket.value,
+				media: media.value.map(entry => ({
+					filename: entry.filename.trim(),
+					media_type: entry.media_type,
+					poster_filename: entry.media_type === 'video'
+						? entry.poster_filename.trim() || null
+						: null,
+					comment: entry.comment,
+					category: entry.category
+				}))
+			})
+
 		});
 
 		const data = await response.json();

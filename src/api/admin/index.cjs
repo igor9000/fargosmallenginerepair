@@ -1021,31 +1021,56 @@ module.exports = function({ db }) {
 				return res.status(400).json({ error: 'Invalid ticket ID' });
 			}
 
-			const [rows] = await db.query(
-				'SELECT * FROM service_tickets WHERE id = ?',
-				[id]
-			);
+			const [[tickets], [media]] = await Promise.all([
+				db.query(
+					'SELECT * FROM service_tickets WHERE id = ?',
+					[id]
+				),
+				db.query(`
+					SELECT id, filename, media_type,
+						poster_filename, comment, category, sort_order
+					FROM service_ticket_media
+					WHERE service_ticket_id = ?
+					ORDER BY sort_order, id
+				`, [id])
+			]);
 
-			if (!rows.length) {
+			if (!tickets.length) {
 				return res.status(404).json({ error: 'Ticket not found' });
 			}
 
-			res.json(rows[0]);
+			res.json({
+				...tickets[0],
+				media
+			});
 		} catch (err) {
 			next(err);
 		}
 	});
 
+
 	// Create ticket.
 	router.post('/service-tickets', async (req, res, next) => {
 		const { ticket, error } = validateServiceTicket(req.body);
+		const media = req.body?.media ?? [];
 
 		if (error) {
 			return res.status(400).json({ error });
 		}
 
+		const mediaError = validateServiceMedia(media);
+
+		if (mediaError) {
+			return res.status(400).json({ error: mediaError });
+		}
+
+		let connection;
+
 		try {
-			const [result] = await db.query(`
+			connection = await db.getConnection();
+			await connection.beginTransaction();
+
+			const [result] = await connection.query(`
 				INSERT INTO service_tickets (
 					ticket_number,
 					customer_id,
@@ -1063,13 +1088,29 @@ module.exports = function({ db }) {
 				ticket.completed ? new Date() : null
 			]);
 
+			await insertServiceMedia(connection, result.insertId, media);
+
+			await connection.commit();
+
 			res.status(201).json({ id: result.insertId });
 		} catch (err) {
+			if (connection) {
+				try {
+					await connection.rollback();
+				} catch (rollbackError) {
+					console.error('Ticket rollback failed:', rollbackError);
+				}
+			}
+
 			handleServiceTicketError(err, res, next);
+		} finally {
+			if (connection) connection.release();
 		}
 	});
 
-	// Update ticket.
+
+
+	//update ticket
 	router.put('/service-tickets/:id', async (req, res, next) => {
 		const id = Number(req.params.id);
 
@@ -1078,13 +1119,36 @@ module.exports = function({ db }) {
 		}
 
 		const { ticket, error } = validateServiceTicket(req.body);
+		const media = req.body?.media;
 
 		if (error) {
 			return res.status(400).json({ error });
 		}
 
+		// PUT replaces the complete media collection.
+		const mediaError = validateServiceMedia(media);
+
+		if (mediaError) {
+			return res.status(400).json({ error: mediaError });
+		}
+
+		let connection;
+
 		try {
-			const [result] = await db.query(`
+			connection = await db.getConnection();
+			await connection.beginTransaction();
+
+			const [existing] = await connection.query(
+				'SELECT id FROM service_tickets WHERE id = ? FOR UPDATE',
+				[id]
+			);
+
+			if (!existing.length) {
+				await connection.rollback();
+				return res.status(404).json({ error: 'Ticket not found' });
+			}
+
+			await connection.query(`
 				UPDATE service_tickets
 				SET
 					ticket_number = ?,
@@ -1108,13 +1172,28 @@ module.exports = function({ db }) {
 				id
 			]);
 
-			if (!result.affectedRows) {
-				return res.status(404).json({ error: 'Ticket not found' });
-			}
+			await connection.query(
+				'DELETE FROM service_ticket_media WHERE service_ticket_id = ?',
+				[id]
+			);
+
+			await insertServiceMedia(connection, id, media);
+
+			await connection.commit();
 
 			res.json({ success: true, id });
 		} catch (err) {
+			if (connection) {
+				try {
+					await connection.rollback();
+				} catch (rollbackError) {
+					console.error('Ticket rollback failed:', rollbackError);
+				}
+			}
+
 			handleServiceTicketError(err, res, next);
+		} finally {
+			if (connection) connection.release();
 		}
 	});
 
@@ -1126,6 +1205,66 @@ module.exports = function({ db }) {
 
 
 
+
+
+	function validateServiceMedia(media) {
+		if (!Array.isArray(media) || media.length > 100) {
+			return 'Invalid media list';
+		}
+
+		const validFilename = value =>
+			typeof value === 'string' &&
+			value.trim().length > 0 &&
+			value.length <= 255 &&
+			value !== '.' &&
+			value !== '..' &&
+			!/[\\/]/.test(value);
+
+		for (const entry of media) {
+			if (!entry || typeof entry !== 'object' ||
+				Array.isArray(entry) ||
+				!validFilename(entry.filename) ||
+				!['diagnostic', 'service'].includes(entry.category) ||
+				!['image', 'video'].includes(entry.media_type) ||
+				(entry.poster_filename != null &&
+					entry.poster_filename !== '' &&
+					!validFilename(entry.poster_filename)) ||
+				(entry.comment != null &&
+					typeof entry.comment !== 'string') ||
+				(entry.comment?.length ?? 0) > 10000
+			) {
+				return 'Invalid service ticket media';
+			}
+		}
+
+		return null;
+	}
+
+	async function insertServiceMedia(connection, ticketId, media) {
+		for (const [index, entry] of media.entries()) {
+			await connection.query(`
+				INSERT INTO service_ticket_media (
+					service_ticket_id,
+					filename,
+					media_type,
+					poster_filename,
+					comment,
+					category,
+					sort_order
+				) VALUES (?, ?, ?, ?, ?, ?, ?)
+			`, [
+				ticketId,
+				entry.filename.trim(),
+				entry.media_type,
+				entry.media_type === 'video'
+					? entry.poster_filename?.trim() || null
+					: null,
+				entry.comment?.trim() || null,
+				entry.category,
+				index + 1
+			]);
+		}
+	}
 
 
 
