@@ -1169,7 +1169,7 @@ module.exports = function({ db }) {
 					service_notes = ?,
 					status = ?,
 					completed_at = CASE
-						WHEN ? IN ('new', 'diagnostic_complete') THEN NULL
+						WHEN ? IN ('new', 'pickup_scheduled', 'diagnostic_complete') THEN NULL
 						WHEN completed_at IS NULL THEN CURRENT_TIMESTAMP
 						ELSE completed_at
 					END
