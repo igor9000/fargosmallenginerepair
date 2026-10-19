@@ -145,6 +145,7 @@
 					class="form-select"
 				>
 					<option value="new">New</option>
+					<option value="pickup_scheduled">Pickup Scheduled</option>
 					<option value="diagnostic_complete">Diagnostic Complete</option>
 					<option value="services_complete">Services Complete</option>
 					<option value="paid">Paid</option>

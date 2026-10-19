@@ -57,12 +57,21 @@
 						<td>{{ formatDate(ticket.created_at) }}</td>
 
 						<td>
-							<span
-								class="badge"
-								:class="ticket.status ? statuses[ticket.status].css : 'bg-danger text-light'"
+							<div
+								class="progress"
+								role="progressbar"
+								:aria-valuenow="statuses[ticket.status].value"
+								aria-valuemin="0"
+								aria-valuemax="100"
 							>
-								{{ ticket.status ? statuses[ticket.status].name : 'Unknown' }}
-							</span>
+								<div
+									class="progress-bar"
+									:class="ticket.status ? statuses[ticket.status].css : 'bg-danger text-light'"
+									:style="{ width: statuses[ticket.status].value + '%' }"
+								>
+									{{ ticket.status ? statuses[ticket.status].name : 'Unknown' }}
+								</div>
+							</div>
 						</td>
 
 						<td>
@@ -97,19 +106,28 @@ const error = ref('');
 const statuses = {
 	new: {
 		name: 'New',
-		css: 'bg-secondary text-light'
+		css: 'progress-bar bg-secondary text-light',
+		value: 20
+	},
+	pickup_scheduled: {
+		name: 'Pickup Scheduled',
+		css: 'progress-bar bg-warning text-dark',
+		value: 40
 	},
 	diagnostic_complete: {
 		name: 'Diagnostic Complete',
-		css: 'bg-warning text-dark'
+		css: 'progress-bar bg-warning text-dark',
+		value: 60
 	},
 	services_complete: {
 		name: 'Services Complete',
-		css: 'bg-info text-dark'
+		css: 'progress-bar bg-warning text-dark',
+		value: 80
 	},
 	paid: {
 		name: 'Paid',
-		css: 'bg-success text-light'
+		css: 'progress-bar bg-success text-light',
+		value: 100
 	}
 }
 

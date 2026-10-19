@@ -956,6 +956,7 @@ module.exports = function({ db }) {
 
 		if (![
 			'new',
+			'pickup_scheduled',
 			'diagnostic_complete',
 			'services_complete',
 			'paid'
