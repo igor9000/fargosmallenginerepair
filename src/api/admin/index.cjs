@@ -1497,5 +1497,452 @@ module.exports = function({ db }) {
 
 
 
+
+
+
+	// Exact decimal arithmetic: all prices are rounded to cents.
+	function scaledDecimal(value) {
+		const text = String(value);
+		if (!/^\d{1,8}(\.\d{1,4})?$/.test(text)) {
+			throw Object.assign(new Error('Invalid decimal value'), {
+				status: 400
+			});
+		}
+
+		const [whole, fraction = ''] = text.split('.');
+		return BigInt(whole) * 10000n +
+			BigInt(fraction.padEnd(4, '0'));
+	}
+
+	function roundDivide(numerator, denominator) {
+		return (numerator + denominator / 2n) / denominator;
+	}
+
+	function money(cents) {
+		const negative = cents < 0n;
+		const absolute = negative ? -cents : cents;
+
+		return `${negative ? '-' : ''}${absolute / 100n}.${String(
+			absolute % 100n
+		).padStart(2, '0')}`;
+	}
+
+	function centsForLine(quantity, unitPrice) {
+		// quantity and price both have four decimal places.
+		return roundDivide(
+			scaledDecimal(quantity) * scaledDecimal(unitPrice),
+			1000000n
+		);
+	}
+
+	function percentageOfCents(cents, rate) {
+		return roundDivide(
+			cents * scaledDecimal(rate),
+			1000000n
+		);
+	}
+
+	function includedTaxCents(grossCents, rate) {
+		const scaledRate = scaledDecimal(rate);
+
+		return roundDivide(
+			grossCents * scaledRate,
+			1000000n + scaledRate
+		);
+	}
+
+	function billingError(message, status = 400) {
+		return Object.assign(new Error(message), { status });
+	}
+
+	function validBillingId(value) {
+		return /^[1-9]\d*$/.test(String(value)) &&
+			Number(value) <= 4294967295;
+	}
+
+	function validateBilling(body) {
+		if (!body || typeof body !== 'object' ||
+			Array.isArray(body) ||
+			body.billing_method !== 'quoted_total' ||
+			!Array.isArray(body.items) ||
+			body.items.length > 100 ||
+			!/^\d{1,8}(\.\d{1,2})?$/.test(
+				String(body.quoted_total ?? '')
+			)) {
+			throw billingError('Invalid billing data');
+		}
+
+		for (const item of body.items) {
+			if (!item || typeof item !== 'object' ||
+				Array.isArray(item) ||
+				!['part', 'standard'].includes(item.category) ||
+				!item.quantity ||
+				!scaledDecimal(item.quantity)) {
+				throw billingError('Invalid billing line item');
+			}
+
+			if (item.category === 'part') {
+				if (
+					typeof item.description !== 'string' ||
+					!item.description.trim() ||
+					item.description.length > 255 ||
+					!['string', 'number'].includes(typeof item.unit_price) ||
+					typeof item.taxable !== 'boolean' ||
+					(item.unit != null && (
+						typeof item.unit !== 'string' ||
+						item.unit.length > 30
+					))
+				) {
+					throw billingError('Invalid part');
+				}
+
+				scaledDecimal(item.unit_price);
+			} else if (!validBillingId(item.standard_charge_id)) {
+				throw billingError('Invalid standard charge ID');
+			}
+		}
+	}
+
+	// Resolve versions effective today. Future rates are excluded.
+	async function loadBillingRates(connection) {
+		const [rows] = await connection.query(`
+			SELECT
+				c.id,
+				c.name,
+				c.slug,
+				c.unit,
+				c.calculation_type,
+				c.active,
+				v.id AS version_id,
+				v.value
+			FROM standard_charges c
+			LEFT JOIN standard_charge_versions v
+				ON v.id = (
+					SELECT v2.id
+					FROM standard_charge_versions v2
+					WHERE v2.standard_charge_id = c.id
+						AND v2.effective_date <= CURRENT_DATE()
+					ORDER BY v2.effective_date DESC, v2.id DESC
+					LIMIT 1
+				)
+		`);
+
+		return new Map(rows.map(row => [Number(row.id), row]));
+	}
+
+	function requireRate(rates, slug) {
+		const rate = [...rates.values()].find(row => row.slug === slug);
+
+		if (!rate || !rate.active || rate.value == null) {
+			throw billingError(
+				`No active rate configured for ${slug}`,
+				409
+			);
+		}
+
+		return rate;
+	}
+
+	function calculateBilling(quotedTotal, items, rates) {
+		const quotedCents = scaledDecimal(quotedTotal) / 100n;
+		const taxRate = requireRate(rates, 'sales-tax');
+		const shopRate = requireRate(rates, 'shop-materials');
+
+		if (
+			taxRate.calculation_type !== 'percentage' ||
+			shopRate.calculation_type !== 'percentage'
+		) {
+			throw billingError('Invalid tax or shop materials configuration', 409);
+		}
+
+		const resolved = [];
+		let enteredCents = 0n;
+		let taxableCents = 0n;
+
+		for (const item of items) {
+			let description;
+			let unit;
+			let rate;
+			let versionId = null;
+			let standardChargeId = null;
+			let taxable;
+
+			if (item.category === 'standard') {
+				const definition = rates.get(Number(item.standard_charge_id));
+
+				if (!definition || !definition.active ||
+					definition.value == null ||
+					definition.calculation_type !== 'unit_price' ||
+					['sales-tax', 'shop-materials'].includes(definition.slug)) {
+					throw billingError('Invalid or unavailable standard charge', 400);
+				}
+
+				description = definition.name;
+				unit = definition.unit;
+				rate = definition.value;
+				versionId = definition.version_id;
+				standardChargeId = definition.id;
+
+				// Current business rules: oil is taxable.
+				// Tax classification needs its own catalog metadata later.
+				taxable = definition.slug === 'engine-oil';
+			} else {
+				description = item.description.trim();
+				unit = item.unit?.trim() || null;
+				rate = item.unit_price;
+				taxable = item.taxable;
+			}
+
+			const amountCents = centsForLine(item.quantity, rate);
+
+			enteredCents += amountCents;
+			if (taxable) taxableCents += amountCents;
+
+			resolved.push({
+				category: item.category,
+				description,
+				quantity: String(item.quantity),
+				unit,
+				unit_price: String(rate),
+				amount: money(amountCents),
+				taxable,
+				standard_charge_id: standardChargeId,
+				standard_charge_version_id: versionId
+			});
+		}
+
+		const materialsCents = percentageOfCents(
+			quotedCents,
+			shopRate.value
+		);
+
+		// These parts prices already INCLUDE sales tax.
+		const taxCents = percentageOfCents(taxableCents, taxRate.value);
+
+		// Tax is not deducted twice; it is included in enteredCents.
+		const laborCents = quotedCents - enteredCents - materialsCents - taxCents;
+
+		if (laborCents < 0n) {
+			throw billingError(
+				'Parts and shop materials exceed the quoted total',
+				400
+			);
+		}
+
+		return {
+			billing_method: 'quoted_total',
+			quoted_total: money(quotedCents),
+			items: resolved,
+			automatic: {
+				shop_materials: money(materialsCents),
+				shop_materials_rate: String(shopRate.value),
+				shop_materials_version_id: shopRate.version_id,
+				sales_tax: money(taxCents),
+				sales_tax_rate: String(taxRate.value),
+				sales_tax_version_id: taxRate.version_id,
+				labor: money(laborCents)
+			},
+			totals: {
+				taxable_gross: money(taxableCents),
+				subtotal_before_tax: money(quotedCents - taxCents),
+				included_tax: money(taxCents),
+				customer_total: money(quotedCents)
+			}
+		};
+	}
+
+
+
+	// Load a ticket's billing data and calculate current amounts.
+	router.get('/service-tickets/:id/billing', async (req, res, next) => {
+		if (!validBillingId(req.params.id)) {
+			return res.status(400).json({ error: 'Invalid ticket ID' });
+		}
+
+		try {
+			const id = Number(req.params.id);
+
+			const [[tickets], [items], rates] = await Promise.all([
+				db.query(`
+					SELECT id, billing_method, quoted_total, completed_at
+					FROM service_tickets
+					WHERE id = ?
+				`, [id]),
+				db.query(`
+					SELECT category, description, quantity, unit,
+						unit_price, taxable, standard_charge_id,
+						standard_charge_version_id, amount
+					FROM service_ticket_charges
+					WHERE service_ticket_id = ?
+					ORDER BY sort_order, id
+				`, [id]),
+				loadBillingRates(db)
+			]);
+
+			if (!tickets.length) {
+				return res.status(404).json({ error: 'Ticket not found' });
+			}
+
+			const ticket = tickets[0];
+
+			if (ticket.quoted_total == null) {
+				return res.json({
+					billing_method: ticket.billing_method,
+					quoted_total: null,
+					items
+				});
+			}
+
+			if (ticket.completed_at) {
+				return res.status(409).json({
+					error: 'Completed billing snapshots are not yet supported'
+				});
+			}
+
+			const enteredItems = items.filter(item =>
+				['part', 'standard'].includes(item.category)
+			);
+
+			res.json(calculateBilling(
+				ticket.quoted_total,
+				enteredItems,
+				rates
+			));
+		} catch (err) {
+			if (err.status) {
+				return res.status(err.status).json({ error: err.message });
+			}
+
+			next(err);
+		}
+	});
+
+	// Save the entered charges for an open service ticket.
+	router.put('/service-tickets/:id/billing', async (req, res, next) => {
+		if (!validBillingId(req.params.id)) {
+			return res.status(400).json({ error: 'Invalid ticket ID' });
+		}
+
+		try {
+			validateBilling(req.body);
+		} catch (err) {
+			return res.status(err.status || 400).json({
+				error: err.message
+			});
+		}
+
+		const id = Number(req.params.id);
+		let connection;
+
+		try {
+			connection = await db.getConnection();
+			await connection.beginTransaction();
+
+			const [tickets] = await connection.query(`
+				SELECT id, completed_at
+				FROM service_tickets
+				WHERE id = ?
+				FOR UPDATE
+			`, [id]);
+
+			if (!tickets.length) {
+				throw billingError('Ticket not found', 404);
+			}
+
+			if (tickets[0].completed_at) {
+				throw billingError('Completed tickets cannot be repriced', 409);
+			}
+
+			const rates = await loadBillingRates(connection);
+
+			const calculated = calculateBilling(
+				req.body.quoted_total,
+				req.body.items,
+				rates
+			);
+
+			await connection.query(`
+				UPDATE service_tickets
+				SET billing_method = ?, quoted_total = ?
+				WHERE id = ?
+			`, [
+				'quoted_total',
+				calculated.quoted_total,
+				id
+			]);
+
+			await connection.query(`
+				DELETE FROM service_ticket_charges
+				WHERE service_ticket_id = ?
+			`, [id]);
+
+			for (const [index, item] of calculated.items.entries()) {
+				await connection.query(`
+					INSERT INTO service_ticket_charges (
+						service_ticket_id,
+						standard_charge_id,
+						category,
+						description,
+						quantity,
+						unit,
+						unit_price,
+						amount,
+						standard_charge_version_id,
+						taxable,
+						sort_order
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				`, [
+					id,
+					item.standard_charge_id,
+					item.category,
+					item.description,
+					item.quantity,
+					item.unit,
+					item.unit_price,
+					item.amount,
+					// Open tickets must resolve the latest rate.
+					null,
+					Number(item.taxable),
+					index + 1
+				]);
+			}
+
+			await connection.commit();
+
+			res.json({
+				success: true,
+				...calculated
+			});
+		} catch (err) {
+			if (connection) {
+				try {
+					await connection.rollback();
+				} catch (rollbackError) {
+					console.error('Billing rollback failed:', rollbackError);
+				}
+			}
+
+			if (err.status) {
+				return res.status(err.status).json({
+					error: err.message
+				});
+			}
+
+			next(err);
+		} finally {
+			if (connection) connection.release();
+		}
+	});
+
+
+
+
+
+
+
+
+
+
+
 	return router;
 };

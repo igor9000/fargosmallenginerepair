@@ -123,6 +123,17 @@
 			/>
 
 
+			<ServiceTicketChargesEditor
+				v-if="isEditing && !ticket.completed"
+				:ticket-id="ticketId"
+			/>
+
+			<div v-else-if="!isEditing" class="col-12 mt-4">
+				<p class="text-muted">
+					Create the ticket first, then reopen it to add billing charges.
+				</p>
+			</div>
+
 			<div class="col-12 mt-4">
 				<div class="form-check">
 					<input
@@ -170,6 +181,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import ServiceTicketMediaEditor from './ServiceTicketMediaEditor.vue';
+import ServiceTicketChargesEditor from './ServiceTicketChargesEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
