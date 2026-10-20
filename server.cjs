@@ -29,6 +29,13 @@ app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 app.use('/api/admin', createAdminRouter({ db }));
 
 
+const createPublicServiceTicketsRouter =
+	require('./src/api/public/service-tickets.cjs');
+
+app.use(
+	'/api/service-tickets',
+	createPublicServiceTicketsRouter({ db })
+);
 
 
 

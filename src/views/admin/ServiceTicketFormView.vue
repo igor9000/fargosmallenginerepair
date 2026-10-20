@@ -35,6 +35,31 @@
 				<div class="form-text">Assigned by the external system.</div>
 			</div>
 
+			<div v-if="customerReportUrl" class="col-12 mt-4">
+				<label class="form-label fw-bold">Customer Report Link</label>
+
+				<div class="input-group">
+					<input
+						:value="customerReportUrl"
+						class="form-control"
+						readonly
+						aria-label="Customer report link"
+					/>
+
+					<button
+						type="button"
+						class="btn btn-outline-secondary"
+						@click="copyCustomerReportUrl"
+					>
+						Copy Link
+					</button>
+				</div>
+
+				<div class="form-text">
+					Anyone with this link can view the ticket.
+				</div>
+			</div>
+
 			<div class="col-md-8">
 				<label class="form-label">Customer *</label>
 
@@ -65,12 +90,12 @@
 			</div>
 
 			<div class="col-12">
-				<label class="form-label">Description</label>
+				<label class="form-label">Customer Concern</label>
 				<textarea
 					v-model="ticket.description"
 					class="form-control"
 					rows="7"
-					placeholder="Equipment, reported problem, diagnosis, repair notes..."
+					placeholder="Equipment, reported problem, customer notes, etc..."
 				></textarea>
 			</div>
 
@@ -223,6 +248,26 @@ const mediaCategories = [
 	{ value: 'diagnostic', label: 'Diagnostic Media' },
 	{ value: 'service', label: 'Service Media' }
 ];
+
+const customerReportUrl = computed(() => {
+	if (
+		!isEditing.value ||
+		!ticket.value.ticket_number ||
+		!token.value
+	) {
+		return '';
+	}
+
+	return `${window.location.origin}/service-tickets/` +
+		`${encodeURIComponent(ticket.value.ticket_number)}/` +
+		encodeURIComponent(token.value);
+});
+
+async function copyCustomerReportUrl() {
+	if (!customerReportUrl.value) return;
+
+	await navigator.clipboard.writeText(customerReportUrl.value);
+}
 
 function addMedia(category) {
 	media.value.push({

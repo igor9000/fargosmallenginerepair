@@ -41,6 +41,14 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/service-tickets/:ticketNumber/:token',
+			name: 'public-service-ticket',
+			component: () => import('../views/ServiceTicketView.vue'),
+			meta: {
+				showFooterCTA: false
+			}
+		},
+		{
 			path: '/admin/login',
 			name: 'admin-login',
 			component: () => import('../views/admin/AdminLoginView.vue')
