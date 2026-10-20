@@ -17,7 +17,7 @@
 			<header class="mb-4">
 				<div class="justify-content-between align-items-start gap-3">
 					<div class="row">
-						<div class="col-6">
+						<div class="col-4 col-lg-6">
 							<img
 								src="/logo-square.png"
 								alt="Fargo Small Engine Repair"
@@ -25,7 +25,7 @@
 								style="max-height: 250px;"
 							/>
 						</div>
-						<div class="col-6 text-end">
+						<div class="col-8 col-lg-6 text-end">
 							<h1 class="h2 mb-1">
 								Service Ticket #{{ ticket.ticket_number }}
 							</h1>
@@ -55,9 +55,7 @@
 					<div class="row">
 						<div class="col">
 							<h2 class="h5 mb-1">Customer Concern</h2>
-							<p class="mb-0">
-								<p class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.description }}</p>
-							</p>
+							<p class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.description }}</p>
 						</div>
 						<div
 							v-if="ticket.status != 'paid' && !ticket.service"
@@ -91,9 +89,7 @@
 				<div class="card-body">
 					<h2 class="h4 mb-3">Diagnostic Report</h2>
 
-					<p v-if="ticket.diagnostic.notes" class="report-notes mb-4">
-						<p class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.diagnostic.notes }}</p>
-					</p>
+					<p v-if="ticket.diagnostic.notes" class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.diagnostic.notes }}</p>
 
 					<MediaGallery
 						:entries="ticket.diagnostic.media"
@@ -106,9 +102,7 @@
 				<div class="card-body">
 					<h2 class="h4 mb-3">Service Performed</h2>
 
-					<p v-if="ticket.service.notes" class="report-notes mb-4">
-						<p class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.service.notes }}</p>
-					</p>
+					<p v-if="ticket.service.notes" class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.service.notes }}</p>
 
 					<MediaGallery
 						:entries="ticket.service.media"
