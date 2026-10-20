@@ -139,8 +139,101 @@ module.exports = function({ db }) {
 				result.amount_due = ticket.quoted_total;
 			}
 
-			// Paid receipts will be added when receipt
-			// snapshots and payment recording are implemented.
+
+			if (showService && ticket.quoted_total != null) {
+				const [items] = await db.query(`
+					SELECT
+						description,
+						quantity,
+						unit,
+						unit_price,
+						amount
+					FROM service_ticket_charges
+					WHERE service_ticket_id = ?
+						AND category IN ('part', 'standard')
+					ORDER BY sort_order, id
+				`, [ticket.id]);
+
+				const [rates] = await db.query(`
+					SELECT c.slug, v.value
+					FROM standard_charges c
+					JOIN standard_charge_versions v
+						ON v.id = (
+							SELECT v2.id
+							FROM standard_charge_versions v2
+							WHERE v2.standard_charge_id = c.id
+								AND v2.effective_date <= CURRENT_DATE()
+							ORDER BY v2.effective_date DESC, v2.id DESC
+							LIMIT 1
+						)
+					WHERE c.slug IN ('shop-materials', 'sales-tax')
+						AND c.active = 1
+				`);
+
+				const rateMap = new Map(
+					rates.map(rate => [rate.slug, rate.value])
+				);
+
+				if (!rateMap.has('shop-materials') ||
+					!rateMap.has('sales-tax')) {
+					throw new Error('Billing rates are unavailable');
+				}
+
+				const toCents = value =>
+					BigInt(String(Number(value).toFixed(2)).replace('.', ''));
+
+				const fromCents = cents =>
+					`${cents / 100n}.${String(cents % 100n).padStart(2, '0')}`;
+
+				const percentage = (cents, rate) => {
+					const scaled = BigInt(
+						String(Number(rate).toFixed(4)).replace('.', '')
+					);
+
+					return (cents * scaled + 500000n) / 1000000n;
+				};
+
+				const total = toCents(ticket.quoted_total);
+
+				const entered = items.reduce(
+					(sum, item) => sum + toCents(item.amount),
+					0n
+				);
+
+				const [[taxableResult]] = await db.query(`
+					SELECT COALESCE(SUM(amount), 0) AS taxable_amount
+					FROM service_ticket_charges
+					WHERE service_ticket_id = ?
+						AND category IN ('part', 'standard')
+						AND taxable = 1
+				`, [ticket.id]);
+
+				const salesTax = percentage(
+					toCents(taxableResult.taxable_amount),
+					rateMap.get('sales-tax')
+				);
+
+				const shopMaterials = percentage(
+					total,
+					rateMap.get('shop-materials')
+				);
+
+				const labor = total - entered - shopMaterials - salesTax;
+
+				if (labor < 0n) {
+					throw new Error('Service ticket billing exceeds total');
+				}
+
+				result.billing = {
+					items,
+					labor: fromCents(labor),
+					shop_materials: fromCents(shopMaterials),
+					sales_tax: fromCents(salesTax),
+					subtotal_before_tax: fromCents(total - salesTax),
+					total: fromCents(total)
+				};
+			}
+
 
 			return res.json(result);
 		} catch (err) {

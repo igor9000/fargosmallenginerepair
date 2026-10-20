@@ -112,26 +112,94 @@
 			</section>
 
 			<section
-				v-if="ticket.status === 'services_complete' &&
-					ticket.amount_due != null"
+				v-if="ticket.billing"
 				class="card mb-4"
 			>
-				<div class="card-body d-flex justify-content-between align-items-center gap-3">
-					<div>
-						<h2 class="h5 mb-1">Amount Due</h2>
-						<p class="text-muted small mb-0">
-							Payment methods: cash, check, and venmo
-						</p>
+				<div class="card-body">
+					<h2 class="h4 mb-2">Service Charges</h2>
+					<p v-if="ticket.status !== 'paid'" class="text-muted mb-3">
+						Payment methods: cash, check, and venmo
+					</p>
+
+					<div class="table-responsive">
+						<table class="table table-bordered align-middle mb-0 service-charges-table">
+							<thead class="table-light">
+								<tr>
+									<th>Description</th>
+									<th class="text-end">Qty</th>
+									<th>Unit</th>
+									<th class="text-end">Rate</th>
+									<th class="text-end">Amount</th>
+								</tr>
+							</thead>
+
+							<tbody>
+								<tr
+									v-for="(item, index) in ticket.billing.items"
+									:key="index"
+								>
+									<td>{{ item.description }}</td>
+									<td class="text-end">
+										{{ Number(item.quantity) }}
+									</td>
+									<td>{{ item.unit }}</td>
+									<td class="text-end text-nowrap">
+										{{ currency(item.unit_price) }}
+									</td>
+									<td class="text-end text-nowrap">
+										{{ currency(item.amount) }}
+									</td>
+								</tr>
+
+								<tr>
+									<td colspan="4">Labor</td>
+									<td class="text-end text-nowrap">
+										{{ currency(ticket.billing.labor) }}
+									</td>
+								</tr>
+
+								<tr>
+									<td colspan="4">Shop Materials</td>
+									<td class="text-end text-nowrap">
+										{{ currency(ticket.billing.shop_materials) }}
+									</td>
+								</tr>
+
+								<tr class="table-footer">
+									<td colspan="4">Subtotal</td>
+									<td class="text-end text-nowrap">
+										{{ currency(ticket.billing.subtotal_before_tax) }}
+									</td>
+								</tr>
+
+								<tr class="table-footer">
+									<td colspan="4">Sales Tax</td>
+									<td class="text-end text-nowrap">
+										{{ currency(ticket.billing.sales_tax) }}
+									</td>
+								</tr>
+
+								<tr class="table-primary">
+									<th colspan="4" class="fs-5">{{ ticket.status === 'paid' ? 'Total Paid' : 'Amount Due' }}</th>
+									<th class="text-end text-nowrap fs-5">
+										{{ currency(ticket.billing.total) }}
+									</th>
+								</tr>
+							</tbody>
+						</table>
 					</div>
-					<strong class="fs-3 text-nowrap">
-						{{ currency(ticket.amount_due) }}
-					</strong>
 				</div>
 			</section>
+
+
+
+
 
 			<div v-if="ticket.status === 'paid'" class="alert alert-success">
 				Thank you for your business!
 			</div>
+
+			
 		</template>
 	</main>
 </template>
@@ -238,5 +306,23 @@ watch(
 .report-notes {
 	white-space: pre-wrap;
 	overflow-wrap: anywhere;
+}
+.service-charges-table td,
+.service-charges-table th,
+.service-charges-table tr {
+	border-color: var(--bs-border-color);
+	border-left: none;
+	border-right: none;
+}
+.service-charges-table {
+	border-left: 1px solid var(--bs-border-color);
+	border-right: 1px solid var(--bs-border-color);
+}
+.table-footer > td {
+	--bs-table-bg: var(--bs-light);
+	background-color: var(--bs-table-bg);
+}
+tr:nth-child(1 of .table-footer) td {
+	border-top-width: 2px;
 }
 </style>
