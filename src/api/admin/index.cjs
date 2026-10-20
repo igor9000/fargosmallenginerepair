@@ -1806,12 +1806,6 @@ module.exports = function({ db }) {
 				});
 			}
 
-			if (ticket.completed_at) {
-				return res.status(409).json({
-					error: 'Completed billing snapshots are not yet supported'
-				});
-			}
-
 			const enteredItems = items.filter(item =>
 				['part', 'standard'].includes(item.category)
 			);

@@ -149,7 +149,7 @@
 
 
 			<ServiceTicketChargesEditor
-				v-if="isEditing && ticket.status !== 'paid'"
+				v-if="isEditing"
 				:ticket-id="ticketId"
 			/>
 
