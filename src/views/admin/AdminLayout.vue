@@ -12,6 +12,7 @@
 
 				<RouterLink to="/admin/customers">Customers</RouterLink>
 				<RouterLink to="/admin/service-tickets">Service Tickets</RouterLink>
+				<RouterLink to="/admin/inventory-sales">Inventory Sales</RouterLink>
 
 				<div class="nav-heading">Inventory</div>
 

@@ -129,6 +129,16 @@ const router = createRouter({
 					name: 'admin-standard-charges-edit',
 					component: () => import('../views/admin/StandardChargeFormView.vue')
 				},
+				{
+					path: 'inventory-sales',
+					name: 'admin-inventory-sales',
+					component: () => import('../views/admin/InventorySalesView.vue')
+				},
+				{
+					path: 'inventory-sales/new',
+					name: 'admin-inventory-sales-new',
+					component: () => import('../views/admin/InventorySaleFormView.vue')
+				},
 				...[
 					'brands',
 					'inventory-attribute-values',

@@ -1951,5 +1951,241 @@ module.exports = function({ db }) {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+router.get('/inventory-sales', async (req, res, next) => {
+	try {
+		const [rows] = await db.query(`
+			SELECT
+				s.id,
+				s.sale_number,
+				s.inventory_id,
+				s.customer_id,
+				s.token,
+				s.subtotal,
+				s.tax_rate,
+				s.sales_tax,
+				s.total,
+				s.payment_method,
+				s.sale_date,
+				s.notes,
+				i.sku,
+				i.name AS inventory_name,
+				c.external_id AS customer_external_id,
+				c.first_name,
+				c.last_name
+			FROM inventory_sales s
+			JOIN inventory i ON i.id = s.inventory_id
+			JOIN customers c ON c.id = s.customer_id
+			ORDER BY s.sale_date DESC, s.id DESC
+		`);
+
+		res.json(rows);
+	} catch (err) {
+		next(err);
+	}
+});
+
+
+
+
+
+
+
+router.post('/inventory-sales', async (req, res, next) => {
+	const {
+		sale_number,
+		inventory_id,
+		customer_id,
+		total,
+		notes = ''
+	} = req.body ?? {};
+
+	const validId = value =>
+		/^[1-9]\d*$/.test(String(value)) &&
+		Number(value) <= 4294967295;
+
+	if (
+		!validId(sale_number) ||
+		!validId(inventory_id) ||
+		!validId(customer_id) ||
+		!(/^\d{1,8}(\.\d{1,2})?$/.test(String(total ?? ''))) ||
+		typeof notes !== 'string' ||
+		notes.length > 10000
+	) {
+		return res.status(400).json({
+			error: 'Invalid inventory sale data'
+		});
+	}
+
+	const totalCents = scaledDecimal(total) / 100n;
+
+	if (totalCents <= 0n) {
+		return res.status(400).json({
+			error: 'Sale price must be greater than zero'
+		});
+	}
+
+	let connection;
+
+	try {
+		connection = await db.getConnection();
+		await connection.beginTransaction();
+
+		// Lock inventory to prevent concurrent sales.
+		const [items] = await connection.query(`
+			SELECT id, active
+			FROM inventory
+			WHERE id = ?
+			FOR UPDATE
+		`, [Number(inventory_id)]);
+
+		if (!items.length) {
+			throw billingError('Inventory item not found', 404);
+		}
+
+		if (Number(items[0].active) !== 1) {
+			throw billingError(
+				'Inventory item is not active',
+				409
+			);
+		}
+
+		// Confirm the customer exists.
+		const [customers] = await connection.query(`
+			SELECT id
+			FROM customers
+			WHERE id = ?
+			LIMIT 1
+		`, [Number(customer_id)]);
+
+		if (!customers.length) {
+			throw billingError('Customer not found', 404);
+		}
+
+		// Reuse the existing standard charge rate system.
+		const rates = await loadBillingRates(connection);
+		const taxRate = requireRate(rates, 'sales-tax');
+
+		if (taxRate.calculation_type !== 'percentage') {
+			throw billingError(
+				'Invalid sales tax configuration',
+				409
+			);
+		}
+
+		// Customer price already includes sales tax.
+		const taxCents = includedTaxCents(
+			totalCents,
+			taxRate.value
+		);
+
+		const subtotalCents = totalCents - taxCents;
+
+		// Database generates the token, payment method,
+		// sale date, and created_at defaults.
+		const [result] = await connection.query(`
+			INSERT INTO inventory_sales (
+				sale_number,
+				inventory_id,
+				customer_id,
+				subtotal,
+				tax_rate,
+				sales_tax,
+				total,
+				notes
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		`, [
+			Number(sale_number),
+			Number(inventory_id),
+			Number(customer_id),
+			money(subtotalCents),
+			String(taxRate.value),
+			money(taxCents),
+			money(totalCents),
+			notes.trim() || null
+		]);
+
+		// Remove sold equipment from public inventory.
+		await connection.query(`
+			UPDATE inventory
+			SET active = 0, pending = 0
+			WHERE id = ?
+		`, [Number(inventory_id)]);
+
+		const [sales] = await connection.query(`
+			SELECT id, sale_number, token
+			FROM inventory_sales
+			WHERE id = ?
+		`, [result.insertId]);
+
+		await connection.commit();
+
+		res.status(201).json({
+			success: true,
+			...sales[0],
+			subtotal: money(subtotalCents),
+			sales_tax: money(taxCents),
+			total: money(totalCents)
+		});
+	} catch (err) {
+		if (connection) {
+			try {
+				await connection.rollback();
+			} catch (rollbackError) {
+				console.error(
+					'Inventory sale rollback failed:',
+					rollbackError
+				);
+			}
+		}
+
+		if (err.code === 'ER_DUP_ENTRY') {
+			return res.status(409).json({
+				error: 'Sale number or inventory item already sold'
+			});
+		}
+
+		if (err.status) {
+			return res.status(err.status).json({
+				error: err.message
+			});
+		}
+
+		next(err);
+	} finally {
+		if (connection) connection.release();
+	}
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	return router;
 };
