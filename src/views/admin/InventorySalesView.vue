@@ -40,7 +40,7 @@
 						<th class="text-end">Subtotal</th>
 						<th class="text-end">Tax</th>
 						<th class="text-end">Total</th>
-						<th>Payment</th>
+						<th>Receipt</th>
 					</tr>
 				</thead>
 
@@ -79,7 +79,16 @@
 							{{ currency(sale.total) }}
 						</td>
 
-						<td>{{ sale.payment_method }}</td>
+						<td>
+							<a
+								:href="`/inventory-sales/${sale.sale_number}/${sale.token}`"
+								class="btn btn-sm btn-outline-primary"
+								target="_blank"
+								rel="noopener noreferrer"
+							>
+								View Receipt
+							</a>
+						</td>
 					</tr>
 
 					<tr v-if="filteredSales.length === 0">

@@ -49,6 +49,14 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/inventory-sales/:saleNumber/:token',
+			name: 'public-inventory-sale',
+			component: () => import('../views/InventorySaleView.vue'),
+			meta: {
+				showFooterCTA: false
+			}
+		},
+		{
 			path: '/admin/login',
 			name: 'admin-login',
 			component: () => import('../views/admin/AdminLoginView.vue')

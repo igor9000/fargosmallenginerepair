@@ -37,7 +37,13 @@ app.use(
 	createPublicServiceTicketsRouter({ db })
 );
 
+const createPublicInventorySalesRouter =
+	require('./src/api/public/inventory-sales.cjs');
 
+app.use(
+	'/api/inventory-sales',
+	createPublicInventorySalesRouter({ db })
+);
 
 
 
