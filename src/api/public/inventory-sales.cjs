@@ -12,6 +12,7 @@ module.exports = function({ db }) {
 		legacyHeaders: false
 	}));
 
+	
 	router.get('/:saleNumber/:token', async (req, res, next) => {
 		const { saleNumber, token } = req.params;
 
@@ -30,43 +31,59 @@ module.exports = function({ db }) {
 		}
 
 		try {
-			const [rows] = await db.query(`
+			const [sales] = await db.query(`
 				SELECT
-					s.sale_number,
-					s.subtotal,
-					s.tax_rate,
-					s.sales_tax,
-					s.total,
-					s.payment_method,
-					s.sale_date,
-					i.sku,
-					i.name AS inventory_name,
-					c.first_name,
-					c.last_name
-				FROM inventory_sales s
-				INNER JOIN inventory i
-					ON i.id = s.inventory_id
-				INNER JOIN customers c
-					ON c.id = s.customer_id
-				WHERE s.sale_number = ?
-					AND s.token = ?
+					id,
+					sale_number,
+					subtotal,
+					tax_rate,
+					sales_tax,
+					total,
+					payment_method,
+					sale_date
+				FROM inventory_sales
+				WHERE sale_number = ?
+					AND token = ?
 				LIMIT 1
-			`, [
-				Number(saleNumber),
-				token
-			]);
+			`, [Number(saleNumber), token]);
 
-			if (!rows.length) {
+			if (!sales.length) {
 				return res.status(404).json({
 					error: 'Inventory sale not found'
 				});
 			}
 
-			res.json(rows[0]);
+			const sale = sales[0];
+
+			const [items] = await db.query(`
+				SELECT
+					i.sku,
+					i.name AS inventory_name,
+					si.subtotal,
+					si.sales_tax,
+					si.total
+				FROM inventory_sale_items si
+				JOIN inventory i
+					ON i.id = si.inventory_id
+				WHERE si.inventory_sale_id = ?
+				ORDER BY si.sort_order, si.id
+			`, [sale.id]);
+
+			res.json({
+				sale_number: sale.sale_number,
+				subtotal: sale.subtotal,
+				tax_rate: sale.tax_rate,
+				sales_tax: sale.sales_tax,
+				total: sale.total,
+				payment_method: sale.payment_method,
+				sale_date: sale.sale_date,
+				items
+			});
 		} catch (err) {
 			next(err);
 		}
 	});
+
 
 	return router;
 };

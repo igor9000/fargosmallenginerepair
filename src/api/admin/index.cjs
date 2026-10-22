@@ -1967,76 +1967,219 @@ module.exports = function({ db }) {
 
 
 
+
+// Inventory Sales: common validation and calculations.
+
+function validSaleId(value) {
+	return /^[1-9]\d*$/.test(String(value)) &&
+		Number(value) <= 4294967295;
+}
+
+function validSaleAmount(value) {
+	return /^\d{1,8}(\.\d{1,2})?$/.test(String(value)) &&
+		Number(value) > 0;
+}
+
+function validateInventorySale(body) {
+	if (
+		!body ||
+		!validSaleId(body.sale_number) ||
+		!validSaleId(body.customer_id) ||
+		!Array.isArray(body.items) ||
+		body.items.length < 1 ||
+		body.items.length > 100 ||
+		typeof (body.notes ?? '') !== 'string' ||
+		String(body.notes ?? '').length > 10000
+	) {
+		throw billingError('Invalid inventory sale data');
+	}
+
+	const ids = new Set();
+
+	for (const item of body.items) {
+		if (
+			!item ||
+			!validSaleId(item.inventory_id) ||
+			!validSaleAmount(item.total)
+		) {
+			throw billingError('Invalid equipment or selling price');
+		}
+
+		const id = Number(item.inventory_id);
+
+		if (ids.has(id)) {
+			throw billingError('Equipment appears more than once');
+		}
+
+		ids.add(id);
+	}
+
+	return {
+		sale_number: Number(body.sale_number),
+		customer_id: Number(body.customer_id),
+		notes: (body.notes ?? '').trim() || null,
+		items: body.items.map(item => ({
+			inventory_id: Number(item.inventory_id),
+			total: String(item.total)
+		}))
+	};
+}
+
+function calculateInventorySale(items, taxRate) {
+	let subtotal = 0n;
+	let salesTax = 0n;
+	let total = 0n;
+
+	const lines = items.map((item, index) => {
+		const lineTotal = scaledDecimal(item.total) / 100n;
+		const lineTax = includedTaxCents(lineTotal, taxRate);
+		const lineSubtotal = lineTotal - lineTax;
+
+		subtotal += lineSubtotal;
+		salesTax += lineTax;
+		total += lineTotal;
+
+		return {
+			inventory_id: item.inventory_id,
+			subtotal: money(lineSubtotal),
+			sales_tax: money(lineTax),
+			total: money(lineTotal),
+			sort_order: index
+		};
+	});
+
+	// Maximum supported by DECIMAL(10,2).
+	if (total > 9999999999n) {
+		throw billingError('Sale total is too large');
+	}
+
+	return {
+		lines,
+		subtotal: money(subtotal),
+		sales_tax: money(salesTax),
+		total: money(total)
+	};
+}
+
+function handleInventorySaleError(err, res, next) {
+	if (err.code === 'ER_DUP_ENTRY') {
+		return res.status(409).json({
+			error: 'Sale number or equipment is already assigned'
+		});
+	}
+
+	if (err.status) {
+		return res.status(err.status).json({
+			error: err.message
+		});
+	}
+
+	next(err);
+}
+
+
+// List sales with their equipment.
 router.get('/inventory-sales', async (req, res, next) => {
 	try {
-		const [rows] = await db.query(`
-			SELECT
-				s.id,
-				s.sale_number,
-				s.inventory_id,
-				s.customer_id,
-				s.token,
-				s.subtotal,
-				s.tax_rate,
-				s.sales_tax,
-				s.total,
-				s.payment_method,
-				s.sale_date,
-				s.notes,
-				i.sku,
-				i.name AS inventory_name,
-				c.external_id AS customer_external_id,
-				c.first_name,
-				c.last_name
-			FROM inventory_sales s
-			JOIN inventory i ON i.id = s.inventory_id
-			JOIN customers c ON c.id = s.customer_id
-			ORDER BY s.sale_date DESC, s.id DESC
-		`);
+		const [[sales], [items]] = await Promise.all([
+			db.query(`
+				SELECT
+					s.*,
+					c.external_id AS customer_external_id,
+					c.first_name,
+					c.last_name
+				FROM inventory_sales s
+				JOIN customers c ON c.id = s.customer_id
+				ORDER BY s.sale_date DESC, s.id DESC
+			`),
+			db.query(`
+				SELECT
+					si.inventory_sale_id,
+					si.inventory_id,
+					si.subtotal,
+					si.sales_tax,
+					si.total,
+					i.sku,
+					i.name
+				FROM inventory_sale_items si
+				JOIN inventory i ON i.id = si.inventory_id
+				ORDER BY si.inventory_sale_id,
+					si.sort_order, si.id
+			`)
+		]);
 
-		res.json(rows);
+		const salesById = new Map();
+
+		for (const sale of sales) {
+			sale.items = [];
+			salesById.set(Number(sale.id), sale);
+		}
+
+		for (const item of items) {
+			salesById.get(Number(item.inventory_sale_id))
+				?.items.push(item);
+		}
+
+		res.json(sales);
 	} catch (err) {
 		next(err);
 	}
 });
 
 
-
-
-
-
-
-router.post('/inventory-sales', async (req, res, next) => {
-	const {
-		sale_number,
-		inventory_id,
-		customer_id,
-		total,
-		notes = ''
-	} = req.body ?? {};
-
-	const validId = value =>
-		/^[1-9]\d*$/.test(String(value)) &&
-		Number(value) <= 4294967295;
-
-	if (
-		!validId(sale_number) ||
-		!validId(inventory_id) ||
-		!validId(customer_id) ||
-		!(/^\d{1,8}(\.\d{1,2})?$/.test(String(total ?? ''))) ||
-		typeof notes !== 'string' ||
-		notes.length > 10000
-	) {
+// Load a single sale for editing.
+router.get('/inventory-sales/:id', async (req, res, next) => {
+	if (!validSaleId(req.params.id)) {
 		return res.status(400).json({
-			error: 'Invalid inventory sale data'
+			error: 'Invalid sale ID'
 		});
 	}
 
-	const totalCents = scaledDecimal(total) / 100n;
+	try {
+		const [[sales], [items]] = await Promise.all([
+			db.query(`
+				SELECT *
+				FROM inventory_sales
+				WHERE id = ?
+			`, [Number(req.params.id)]),
 
-	if (totalCents <= 0n) {
-		return res.status(400).json({
-			error: 'Sale price must be greater than zero'
+			db.query(`
+				SELECT
+					inventory_id,
+					subtotal,
+					sales_tax,
+					total
+				FROM inventory_sale_items
+				WHERE inventory_sale_id = ?
+				ORDER BY sort_order, id
+			`, [Number(req.params.id)])
+		]);
+
+		if (!sales.length) {
+			return res.status(404).json({
+				error: 'Sale not found'
+			});
+		}
+
+		res.json({
+			...sales[0],
+			items
+		});
+	} catch (err) {
+		next(err);
+	}
+});
+
+
+// Create or update a sale in one database transaction.
+async function saveInventorySale(req, res, next, saleId = null) {
+	let input;
+
+	try {
+		input = validateInventorySale(req.body);
+	} catch (err) {
+		return res.status(err.status || 400).json({
+			error: err.message
 		});
 	}
 
@@ -2046,101 +2189,210 @@ router.post('/inventory-sales', async (req, res, next) => {
 		connection = await db.getConnection();
 		await connection.beginTransaction();
 
-		// Lock inventory to prevent concurrent sales.
-		const [items] = await connection.query(`
-			SELECT id, active
-			FROM inventory
-			WHERE id = ?
-			FOR UPDATE
-		`, [Number(inventory_id)]);
+		let existingSale = null;
+		let oldIds = [];
 
-		if (!items.length) {
-			throw billingError('Inventory item not found', 404);
-		}
+		if (saleId !== null) {
+			const [rows] = await connection.query(`
+				SELECT id, tax_rate
+				FROM inventory_sales
+				WHERE id = ?
+				FOR UPDATE
+			`, [saleId]);
 
-		if (Number(items[0].active) !== 1) {
-			throw billingError(
-				'Inventory item is not active',
-				409
+			if (!rows.length) {
+				throw billingError('Sale not found', 404);
+			}
+
+			existingSale = rows[0];
+
+			const [oldItems] = await connection.query(`
+				SELECT inventory_id
+				FROM inventory_sale_items
+				WHERE inventory_sale_id = ?
+			`, [saleId]);
+
+			oldIds = oldItems.map(item =>
+				Number(item.inventory_id)
 			);
 		}
 
-		// Confirm the customer exists.
 		const [customers] = await connection.query(`
 			SELECT id
 			FROM customers
 			WHERE id = ?
-			LIMIT 1
-		`, [Number(customer_id)]);
+		`, [input.customer_id]);
 
 		if (!customers.length) {
 			throw billingError('Customer not found', 404);
 		}
 
-		// Reuse the existing standard charge rate system.
-		const rates = await loadBillingRates(connection);
-		const taxRate = requireRate(rates, 'sales-tax');
+		const newIds = input.items.map(item => item.inventory_id);
+		const oldIdSet = new Set(oldIds);
+		const newIdSet = new Set(newIds);
 
-		if (taxRate.calculation_type !== 'percentage') {
-			throw billingError(
-				'Invalid sales tax configuration',
-				409
-			);
+		// Lock all affected equipment in a stable order.
+		const allIds = [...new Set([...oldIds, ...newIds])]
+			.sort((a, b) => a - b);
+
+		const [inventory] = await connection.query(`
+			SELECT id, active
+			FROM inventory
+			WHERE id IN (?)
+			ORDER BY id
+			FOR UPDATE
+		`, [allIds]);
+
+		if (inventory.length !== allIds.length) {
+			throw billingError('Equipment not found', 404);
 		}
 
-		// Customer price already includes sales tax.
-		const taxCents = includedTaxCents(
-			totalCents,
-			taxRate.value
+		// Already-sold items belonging to this sale are allowed.
+		// Newly-added items must be active.
+		for (const item of inventory) {
+			const id = Number(item.id);
+
+			if (
+				newIdSet.has(id) &&
+				!oldIdSet.has(id) &&
+				Number(item.active) !== 1
+			) {
+				throw billingError(
+					'Selected equipment is not available',
+					409
+				);
+			}
+		}
+
+		// Existing sales retain their original tax rate.
+		// New sales use the currently effective rate.
+		let taxRate;
+
+		if (existingSale) {
+			taxRate = String(existingSale.tax_rate);
+		} else {
+			const rates = await loadBillingRates(connection);
+			const rate = requireRate(rates, 'sales-tax');
+
+			if (rate.calculation_type !== 'percentage') {
+				throw billingError(
+					'Invalid sales tax configuration',
+					409
+				);
+			}
+
+			taxRate = String(rate.value);
+		}
+
+		const calculated = calculateInventorySale(
+			input.items,
+			taxRate
 		);
 
-		const subtotalCents = totalCents - taxCents;
+		let id = saleId;
 
-		// Database generates the token, payment method,
-		// sale date, and created_at defaults.
-		const [result] = await connection.query(`
-			INSERT INTO inventory_sales (
-				sale_number,
-				inventory_id,
-				customer_id,
-				subtotal,
-				tax_rate,
-				sales_tax,
-				total,
-				notes
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-		`, [
-			Number(sale_number),
-			Number(inventory_id),
-			Number(customer_id),
-			money(subtotalCents),
-			String(taxRate.value),
-			money(taxCents),
-			money(totalCents),
-			notes.trim() || null
-		]);
+		if (existingSale) {
+			await connection.query(`
+				UPDATE inventory_sales
+				SET
+					sale_number = ?,
+					customer_id = ?,
+					subtotal = ?,
+					sales_tax = ?,
+					total = ?,
+					notes = ?
+				WHERE id = ?
+			`, [
+				input.sale_number,
+				input.customer_id,
+				calculated.subtotal,
+				calculated.sales_tax,
+				calculated.total,
+				input.notes,
+				id
+			]);
 
-		// Remove sold equipment from public inventory.
+			await connection.query(`
+				DELETE FROM inventory_sale_items
+				WHERE inventory_sale_id = ?
+			`, [id]);
+		} else {
+			const [result] = await connection.query(`
+				INSERT INTO inventory_sales (
+					sale_number,
+					customer_id,
+					subtotal,
+					tax_rate,
+					sales_tax,
+					total,
+					notes
+				) VALUES (?, ?, ?, ?, ?, ?, ?)
+			`, [
+				input.sale_number,
+				input.customer_id,
+				calculated.subtotal,
+				taxRate,
+				calculated.sales_tax,
+				calculated.total,
+				input.notes
+			]);
+
+			id = result.insertId;
+		}
+
+		for (const line of calculated.lines) {
+			await connection.query(`
+				INSERT INTO inventory_sale_items (
+					inventory_sale_id,
+					inventory_id,
+					subtotal,
+					sales_tax,
+					total,
+					sort_order
+				) VALUES (?, ?, ?, ?, ?, ?)
+			`, [
+				id,
+				line.inventory_id,
+				line.subtotal,
+				line.sales_tax,
+				line.total,
+				line.sort_order
+			]);
+		}
+
+		// Equipment removed from a sale becomes available again.
+		const removedIds = oldIds.filter(
+			oldId => !newIdSet.has(oldId)
+		);
+
+		if (removedIds.length) {
+			await connection.query(`
+				UPDATE inventory
+				SET active = 1
+				WHERE id IN (?)
+			`, [removedIds]);
+		}
+
+		// Every equipment item now on this sale is inactive.
 		await connection.query(`
 			UPDATE inventory
 			SET active = 0, pending = 0
-			WHERE id = ?
-		`, [Number(inventory_id)]);
+			WHERE id IN (?)
+		`, [newIds]);
 
-		const [sales] = await connection.query(`
+		const [saved] = await connection.query(`
 			SELECT id, sale_number, token
 			FROM inventory_sales
 			WHERE id = ?
-		`, [result.insertId]);
+		`, [id]);
 
 		await connection.commit();
 
-		res.status(201).json({
+		res.status(existingSale ? 200 : 201).json({
 			success: true,
-			...sales[0],
-			subtotal: money(subtotalCents),
-			sales_tax: money(taxCents),
-			total: money(totalCents)
+			...saved[0],
+			...calculated,
+			tax_rate: taxRate
 		});
 	} catch (err) {
 		if (connection) {
@@ -2154,23 +2406,32 @@ router.post('/inventory-sales', async (req, res, next) => {
 			}
 		}
 
-		if (err.code === 'ER_DUP_ENTRY') {
-			return res.status(409).json({
-				error: 'Sale number or inventory item already sold'
-			});
-		}
-
-		if (err.status) {
-			return res.status(err.status).json({
-				error: err.message
-			});
-		}
-
-		next(err);
+		handleInventorySaleError(err, res, next);
 	} finally {
 		if (connection) connection.release();
 	}
+}
+
+
+router.post('/inventory-sales', (req, res, next) => {
+	return saveInventorySale(req, res, next);
 });
+
+router.put('/inventory-sales/:id', (req, res, next) => {
+	if (!validSaleId(req.params.id)) {
+		return res.status(400).json({
+			error: 'Invalid sale ID'
+		});
+	}
+
+	return saveInventorySale(
+		req,
+		res,
+		next,
+		Number(req.params.id)
+	);
+});
+
 
 
 

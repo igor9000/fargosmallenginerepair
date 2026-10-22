@@ -41,6 +41,7 @@
 						<th class="text-end">Tax</th>
 						<th class="text-end">Total</th>
 						<th>Receipt</th>
+						<th>Actions</th>
 					</tr>
 				</thead>
 
@@ -59,9 +60,15 @@
 						</td>
 
 						<td>
-							{{ sale.inventory_name }}
-							<div class="small text-muted">
-								SKU: {{ sale.sku }}
+							<div
+								v-for="item in sale.items"
+								:key="item.inventory_id"
+								class="mb-1"
+							>
+								{{ item.name }}
+								<div class="small text-muted">
+									SKU: {{ item.sku }}
+								</div>
 							</div>
 						</td>
 
@@ -88,6 +95,15 @@
 							>
 								View Receipt
 							</a>
+						</td>
+
+						<td>
+							<RouterLink
+								:to="`/admin/inventory-sales/${sale.id}/edit`"
+								class="btn btn-sm btn-outline-primary"
+							>
+								Edit
+							</RouterLink>
 						</td>
 					</tr>
 
@@ -142,8 +158,10 @@ const filteredSales = computed(() => {
 	return sales.value.filter(sale =>
 		[
 			sale.sale_number,
-			sale.inventory_name,
-			sale.sku,
+			...(sale.items ?? []).flatMap(item => [
+				item.name,
+				item.sku
+			]),
 			customerName(sale),
 			sale.customer_external_id
 		].some(value =>

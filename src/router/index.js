@@ -143,6 +143,11 @@ const router = createRouter({
 					component: () => import('../views/admin/InventorySalesView.vue')
 				},
 				{
+					path: 'inventory-sales/:id/edit',
+					name: 'admin-inventory-sales-edit',
+					component: () => import('../views/admin/InventorySaleFormView.vue')
+				},
+				{
 					path: 'inventory-sales/new',
 					name: 'admin-inventory-sales-new',
 					component: () => import('../views/admin/InventorySaleFormView.vue')

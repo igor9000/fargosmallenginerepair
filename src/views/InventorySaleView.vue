@@ -48,25 +48,25 @@
 							</thead>
 
 							<tbody>
-								<tr>
+								<tr v-for="(item, index) in sale.items" :key="index">
 									<td>
 										<div class="fw-semibold">
-											{{ sale.inventory_name }}
+											{{ item.inventory_name }}
 										</div>
 
 										<div class="small text-muted">
-											SKU: {{ sale.sku }}
+											SKU: {{ item.sku }}
 										</div>
 									</td>
 
 									<td class="text-end">1</td>
 
 									<td class="text-end text-nowrap">
-										{{ currency(sale.subtotal) }}
+										{{ currency(item.subtotal) }}
 									</td>
 
 									<td class="text-end text-nowrap">
-										{{ currency(sale.subtotal) }}
+										{{ currency(item.subtotal) }}
 									</td>
 								</tr>
 
