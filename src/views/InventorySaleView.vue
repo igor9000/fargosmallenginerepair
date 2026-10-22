@@ -20,48 +20,13 @@
 		</div>
 
 		<template v-else-if="sale">
-			<header class="mb-4">
-				<div class="row align-items-start">
-					<div class="col-4 col-lg-6">
-						<img
-							src="/logo-square.png"
-							alt="Fargo Small Engine Repair"
-							class="img-fluid mb-3"
-							style="max-height: 250px"
-						/>
-					</div>
-
-					<div class="col-8 col-lg-6 text-end">
-						<h1 class="h2 mb-1">
-							Sale #{{ sale.sale_number }}
-						</h1>
-
-						<p class="text-muted small mb-2">
-							Sale Date: {{ formatDate(sale.sale_date) }}
-						</p>
-
-						<span class="badge bg-success fs-6">
-							Paid
-						</span>
-
-						<div class="d-flex flex-column gap-1 mt-3">
-							<div>701-491-8696</div>
-							<div>adam@fargosmallenginerepair.com</div>
-							<div>www.fargosmallenginerepair.com</div>
-						</div>
-					</div>
-				</div>
-			</header>
-
-			<section class="card mb-4">
-				<div class="card-body">
-					<h2 class="h5 mb-3">Sold To</h2>
-
-					<div class="fw-semibold">
-						{{ customerName }}
-					</div>
-				</div>
-			</section>
+			<ReceiptHeader
+				:title="`Sale #${sale.sale_number}`"
+				:date="sale.sale_date"
+				date-label="Sale Date"
+				status="Paid"
+				status-class="bg-success"
+			/>
 
 			<section class="card mb-4">
 				<div class="card-body">
@@ -115,7 +80,6 @@
 								<tr class="table-footer">
 									<td colspan="3">
 										Sales Tax
-										({{ Number(sale.tax_rate) }}%)
 									</td>
 									<td class="text-end text-nowrap">
 										{{ currency(sale.sales_tax) }}
@@ -144,46 +108,16 @@
 				</div>
 			</section>
 
-			<section class="card mb-4">
-				<div class="card-body p-4">
-					<h2 class="h5 mb-3">
-						Thank You for Your Business!
-					</h2>
+			<ReceiptThankYou>
+				Thank you for supporting my small business.
+				I appreciate your purchase and the trust
+				you've placed in me.
 
-					<p class="mb-2">
-						Thank you for supporting my small business.
-						I appreciate your purchase and the trust
-						you've placed in me.
-					</p>
-
-					<p class="mb-3">
-						If you have any questions about your
-						equipment, please don't hesitate to
-						reach out.
-					</p>
-
-					<div class="mt-4">
-						<p class="mb-2">Sincerely,</p>
-
-						<img
-							src="/signature.svg"
-							alt="Adam's signature"
-							class="d-block mb-1"
-							style="width: 180px; max-width: 100%; height: auto"
-						/>
-
-						<div class="fw-semibold">Adam</div>
-
-						<div class="text-muted small">
-							701-491-8696
-						</div>
-
-						<div class="text-muted small">
-							Fargo Small Engine Repair
-						</div>
-					</div>
-				</div>
-			</section>
+				<template #follow-up>
+					If you have any questions about your equipment,
+					please don't hesitate to reach out.
+				</template>
+			</ReceiptThankYou>
 
 			<div class="text-center mb-4 print-actions">
 				<button
@@ -201,21 +135,14 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import ReceiptHeader from '../components/receipts/ReceiptHeader.vue';
+import ReceiptThankYou from '../components/receipts/ReceiptThankYou.vue';
 
 const route = useRoute();
 
 const sale = ref(null);
 const loading = ref(true);
 const error = ref('');
-
-const customerName = computed(() => {
-	if (!sale.value) return '';
-
-	return [
-		sale.value.first_name,
-		sale.value.last_name
-	].filter(Boolean).join(' ');
-});
 
 const hasPaymentMethod = computed(() => {
 	const method = sale.value?.payment_method;

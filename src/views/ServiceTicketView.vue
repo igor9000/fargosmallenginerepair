@@ -14,38 +14,14 @@
 		</div>
 
 		<template v-else-if="ticket">
-			<header class="mb-4">
-				<div class="justify-content-between align-items-start gap-3">
-					<div class="row">
-						<div class="col-4 col-lg-6">
-							<img
-								src="/logo-square.png"
-								alt="Fargo Small Engine Repair"
-								class="img-fluid mb-3"
-								style="max-height: 250px;"
-							/>
-						</div>
-						<div class="col-8 col-lg-6 text-end">
-							<h1 class="h2 mb-1">
-								Service Ticket #{{ ticket.ticket_number }}
-							</h1>
-							<p v-if="ticket.created_at" class="text-muted small mb-2">
-								Ticket Date: {{ formatDate(ticket.created_at) }}
-							</p>
+			<ReceiptHeader
+				:title="`Service Ticket #${ticket.ticket_number}`"
+				:date="ticket.created_at"
+				date-label="Ticket Date"
+				:status="statusLabel"
+				:status-class="statusClass"
+			/>
 
-							<span class="badge fs-6" :class="statusClass">
-								{{ statusLabel }}
-							</span>
-
-							<div class="d-flex flex-column gap-1 mt-3">
-								<div>701-491-8696</div>
-								<div>adam@fargosmallenginerepair.com</div>
-								<div>www.fargosmallenginerepair.com</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</header>
 
 			<section
 				v-if="ticket.description"
@@ -193,41 +169,11 @@
 
 
 
-			<section
-				v-if="ticket.status === 'paid'"
-				class="card mb-4"
-			>
-				<div class="card-body p-4">
-					<h2 class="h5 mb-3">Thank You for Your Business!</h2>
-
-					<p class="mb-2">
-						Thank you for supporting my small business. I appreciate the opportunity to service your equipment and the trust you've placed in my work.
-					</p>
-
-					<p class="mb-3">
-						If you have any questions, please don't hesitate to reach out.
-					</p>
-
-					<div class="mt-4">
-						<p class="mb-2">Sincerely,</p>
-
-						<img
-							src="/signature.svg"
-							alt="Adam's signature"
-							class="d-block mb-1"
-							style="width: 180px; max-width: 100%; height: auto;"
-						/>
-
-						<div class="fw-semibold">Adam</div>
-						<div class="text-muted small">
-							701-491-8696
-						</div>
-						<div class="text-muted small">
-							Fargo Small Engine Repair
-						</div>
-					</div>
-				</div>
-			</section>
+			<ReceiptThankYou v-if="ticket.status === 'paid'">
+				Thank you for supporting my small business.
+				I appreciate the opportunity to service your
+				equipment and the trust you've placed in my work.
+			</ReceiptThankYou>
 
 		</template>
 	</main>
@@ -237,6 +183,9 @@
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
 import MediaGallery from '../components/ServiceTicketMediaGallery.vue';
+import ReceiptHeader from '../components/receipts/ReceiptHeader.vue';
+import ReceiptThankYou from '../components/receipts/ReceiptThankYou.vue';
+
 
 const route = useRoute();
 
@@ -263,17 +212,6 @@ const statusLabel = computed(() =>
 const statusClass = computed(() =>
 	statusClasses[ticket.value?.status] || 'bg-secondary'
 );
-
-function formatDate(value) {
-	if (!value) return '';
-
-	return new Intl.DateTimeFormat('en-US', {
-		year: 'numeric',
-		month: 'long',
-		day: 'numeric',
-		timeZone: 'America/Chicago'
-	}).format(new Date(value));
-}
 
 function currency(value) {
 	return new Intl.NumberFormat('en-US', {
