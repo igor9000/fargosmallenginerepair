@@ -57,6 +57,14 @@ const router = createRouter({
 			}
 		},
 		{
+			path: '/inventory-sale-returns/:returnId/:token',
+			name: 'public-inventory-sale-return',
+			component: () => import('../views/InventorySaleReturnView.vue'),
+			meta: {
+				showFooterCTA: false
+			}
+		},
+		{
 			path: '/admin/login',
 			name: 'admin-login',
 			component: () => import('../views/admin/AdminLoginView.vue')
@@ -151,6 +159,13 @@ const router = createRouter({
 					path: 'inventory-sales/new',
 					name: 'admin-inventory-sales-new',
 					component: () => import('../views/admin/InventorySaleFormView.vue')
+				},
+				{
+					path: 'inventory-sales/:id/refunds/new',
+					name: 'admin-inventory-sale-refund-new',
+					component: () => import(
+						'../views/admin/InventorySaleReturnFormView.vue'
+					)
 				},
 				...[
 					'brands',

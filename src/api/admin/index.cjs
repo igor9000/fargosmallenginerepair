@@ -118,6 +118,41 @@ module.exports = function({ db }) {
 
 
 
+
+
+
+async function assertInventoryCanBeListed(connection, inventoryId) {
+	const [sales] = await connection.query(`
+		SELECT
+			si.id,
+			EXISTS (
+				SELECT 1
+				FROM inventory_sale_return_items ri
+				JOIN inventory_sale_returns r
+					ON r.id = ri.inventory_sale_return_id
+				WHERE ri.inventory_sale_item_id = si.id
+					AND r.inventory_sale_id = si.inventory_sale_id
+					AND ri.physically_returned = 1
+			) AS physically_returned
+		FROM inventory_sale_items si
+		JOIN inventory_sales s
+			ON s.id = si.inventory_sale_id
+		WHERE si.inventory_id = ?
+		ORDER BY s.id DESC, si.id DESC
+		LIMIT 1
+	`, [inventoryId]);
+
+	if (sales.length && !Number(sales[0].physically_returned)) {
+		const err = new Error(
+			'This equipment was sold and has not been recorded as physically returned. It cannot be reactivated.'
+		);
+		err.status = 409;
+		throw err;
+	}
+}
+
+
+
 	// inventory	
 	router.get('/inventory', requireAdmin, async (req, res) => {
 		try {
@@ -150,58 +185,98 @@ module.exports = function({ db }) {
 		}
 	});
 
-	router.patch(
-		'/inventory/:id',
-		requireSameOrigin,
-		requireAdmin,
-		async (req, res) => {
-			try {
-				const id = Number(req.params.id);
-				const { name, price, active, pending, featured, clearance } = req.body ?? {};
+	
+router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
+	async (req, res, next) => {
+		let connection;
 
-				if (!Number.isSafeInteger(id) || id < 1 ||
-						typeof name !== 'string' || !name.trim() ||
-						name.length > 255 ||
-						(typeof price !== 'number' && typeof price !== 'string') ||
-						price === '' || price === null ||
-						!Number.isFinite(Number(price)) ||
-						Number(price) < 0 || Number(price) > 99999999.99 ||
-						![active, pending, featured, clearance].every(v =>
-							typeof v === 'boolean'
-						)) {
-					return res.status(400).json({ error: 'Invalid inventory data' });
-				}
+		try {
+			const id = Number(req.params.id);
+			const {
+				name, price, active, pending,
+				featured, clearance
+			} = req.body ?? {};
 
-				const [result] = await db.query(`
-					UPDATE inventory
-					SET name = ?,
-							price = ?,
-							active = ?,
-							pending = ?,
-							featured = ?,
-							clearance = ?
-					WHERE id = ?
-				`, [
-					name.trim(),
-					Number(price),
-					Number(active),
-					Number(pending),
-					Number(featured),
-					Number(clearance),
-					id
-				]);
-
-				if (!result.affectedRows) {
-					return res.status(404).json({ error: 'Item not found' });
-				}
-
-				res.json({ success: true });
-			} catch (error) {
-				console.error('Inventory update error:', error);
-				res.status(500).json({ error: 'Unable to update inventory' });
+			if (
+				!Number.isSafeInteger(id) || id < 1 ||
+				typeof name !== 'string' ||
+				!name.trim() ||
+				name.length > 255 ||
+				!['number', 'string'].includes(typeof price) ||
+				price === '' ||
+				!Number.isFinite(Number(price)) ||
+				Number(price) < 0 ||
+				Number(price) > 99999999.99 ||
+				![active, pending, featured, clearance].every(
+					value => typeof value === 'boolean'
+				)
+			) {
+				return res.status(400).json({
+					error: 'Invalid inventory data'
+				});
 			}
+
+			connection = await db.getConnection();
+			await connection.beginTransaction();
+
+			const [existing] = await connection.query(
+				'SELECT id FROM inventory WHERE id = ? FOR UPDATE',
+				[id]
+			);
+
+			if (!existing.length) {
+				const err = new Error('Inventory item not found');
+				err.status = 404;
+				throw err;
+			}
+
+			if (active) {
+				await assertInventoryCanBeListed(connection, id);
+			}
+
+			await connection.query(`
+				UPDATE inventory
+				SET name = ?,
+					price = ?,
+					active = ?,
+					pending = ?,
+					featured = ?,
+					clearance = ?
+				WHERE id = ?
+			`, [
+				name.trim(),
+				Number(price),
+				Number(active),
+				Number(pending),
+				Number(featured),
+				Number(clearance),
+				id
+			]);
+
+			await connection.commit();
+			res.json({ success: true });
+		} catch (err) {
+			if (connection) {
+				try {
+					await connection.rollback();
+				} catch (rollbackError) {
+					console.error('Inventory rollback failed:', rollbackError);
+				}
+			}
+
+			if (err.status) {
+				return res.status(err.status).json({
+					error: err.message
+				});
+			}
+
+			next(err);
+		} finally {
+			if (connection) connection.release();
 		}
-	);
+	}
+);
+
 
 	router.get('/inventory/options', async (req, res, next) => {
 		try {
@@ -569,6 +644,10 @@ module.exports = function({ db }) {
 				const err = new Error('Inventory item not found');
 				err.status = 404;
 				throw err;
+			}
+
+			if (active) {
+				await assertInventoryCanBeListed(connection, id);
 			}
 
 			if (attributeIds.size) {
@@ -2292,6 +2371,20 @@ async function saveInventorySale(req, res, next, saleId = null) {
 		let id = saleId;
 
 		if (existingSale) {
+			const [recordedReturns] = await connection.query(`
+				SELECT id
+				FROM inventory_sale_returns
+				WHERE inventory_sale_id = ?
+				LIMIT 1
+			`, [id]);
+
+			if (recordedReturns.length) {
+				throw billingError(
+					'This sale has refund history and cannot be edited using the standard sale editor',
+					409
+				);
+			}
+
 			await connection.query(`
 				UPDATE inventory_sales
 				SET
@@ -2360,17 +2453,24 @@ async function saveInventorySale(req, res, next, saleId = null) {
 			]);
 		}
 
-		// Equipment removed from a sale becomes available again.
+		// Equipment removed from this sale can become available
+		// only if no other sale references it.
 		const removedIds = oldIds.filter(
 			oldId => !newIdSet.has(oldId)
 		);
 
 		if (removedIds.length) {
 			await connection.query(`
-				UPDATE inventory
-				SET active = 1
-				WHERE id IN (?)
-			`, [removedIds]);
+				UPDATE inventory i
+				SET i.active = 1
+				WHERE i.id IN (?)
+					AND NOT EXISTS (
+						SELECT 1
+						FROM inventory_sale_items si
+						WHERE si.inventory_id = i.id
+							AND si.inventory_sale_id <> ?
+					)
+			`, [removedIds, id]);
 		}
 
 		// Every equipment item now on this sale is inactive.
@@ -2433,6 +2533,414 @@ router.put('/inventory-sales/:id', (req, res, next) => {
 });
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// ------------------------------------------------------------
+// Inventory Sale Returns / Refunds
+// ------------------------------------------------------------
+
+function refundCents(value) {
+	if (!/^\d{1,8}(\.\d{1,2})?$/.test(String(value))) {
+		throw billingError('Invalid refund amount');
+	}
+
+	return scaledDecimal(value) / 100n;
+}
+
+function centsFromDb(value) {
+	return scaledDecimal(String(value)) / 100n;
+}
+
+// Information needed to record a refund against a sale.
+router.get('/inventory-sales/:id/refund-options', async (req, res, next) => {
+	if (!validBillingId(req.params.id)) {
+		return res.status(400).json({ error: 'Invalid sale ID' });
+	}
+
+	const id = Number(req.params.id);
+
+	try {
+		const [sales] = await db.query(`
+			SELECT id, sale_number, total, tax_rate, sale_date
+			FROM inventory_sales
+			WHERE id = ?
+		`, [id]);
+
+		if (!sales.length) {
+			return res.status(404).json({ error: 'Sale not found' });
+		}
+
+		const [items] = await db.query(`
+			SELECT
+				si.id,
+				si.inventory_id,
+				i.sku,
+				i.name,
+				si.subtotal,
+				si.sales_tax,
+				si.total,
+				COALESCE(x.refunded_total, 0) AS refunded_total,
+				COALESCE(x.refunded_sales_tax, 0) AS refunded_sales_tax,
+				COALESCE(x.physically_returned, 0) AS physically_returned
+			FROM inventory_sale_items si
+			JOIN inventory i ON i.id = si.inventory_id
+			LEFT JOIN (
+				SELECT
+					ri.inventory_sale_item_id,
+					SUM(ri.refund_total) AS refunded_total,
+					SUM(ri.refund_sales_tax) AS refunded_sales_tax,
+					MAX(ri.physically_returned) AS physically_returned
+				FROM inventory_sale_return_items ri
+				JOIN inventory_sale_returns r
+					ON r.id = ri.inventory_sale_return_id
+				WHERE r.inventory_sale_id = ?
+				GROUP BY ri.inventory_sale_item_id
+			) x ON x.inventory_sale_item_id = si.id
+			WHERE si.inventory_sale_id = ?
+			ORDER BY si.sort_order, si.id
+		`, [id, id]);
+
+		const [history] = await db.query(`
+			SELECT
+				id,
+				token,
+				return_date,
+				refund_total,
+				refund_method,
+				refund_reference,
+				reason
+			FROM inventory_sale_returns
+			WHERE inventory_sale_id = ?
+			ORDER BY return_date DESC, id DESC
+		`, [id]);
+
+		res.json({
+			sale: sales[0],
+			items,
+			history
+		});
+	} catch (err) {
+		next(err);
+	}
+});
+
+
+// Record a return/refund.
+// Financial amounts are calculated server-side.
+router.post('/inventory-sales/:id/returns', async (req, res, next) => {
+	if (!validBillingId(req.params.id)) {
+		return res.status(400).json({ error: 'Invalid sale ID' });
+	}
+
+	const saleId = Number(req.params.id);
+	const body = req.body ?? {};
+
+	if (
+		!Array.isArray(body.items) ||
+		body.items.length < 1 ||
+		body.items.length > 100 ||
+		typeof (body.reason ?? '') !== 'string' ||
+		(body.reason ?? '').length > 10000 ||
+		typeof (body.notes ?? '') !== 'string' ||
+		(body.notes ?? '').length > 10000 ||
+		typeof (body.refund_method ?? 'Not Specified') !== 'string' ||
+		(body.refund_method ?? '').length > 30 ||
+		typeof (body.refund_reference ?? '') !== 'string' ||
+		(body.refund_reference ?? '').length > 100
+	) {
+		return res.status(400).json({
+			error: 'Invalid refund information'
+		});
+	}
+
+	const selected = [];
+	const seen = new Set();
+
+	try {
+		for (const item of body.items) {
+			if (
+				!item ||
+				!validBillingId(item.inventory_sale_item_id) ||
+				typeof item.physically_returned !== 'boolean'
+			) {
+				throw billingError('Invalid refund item');
+			}
+
+			const lineId = Number(item.inventory_sale_item_id);
+
+			if (seen.has(lineId)) {
+				throw billingError('Duplicate refund item');
+			}
+
+			seen.add(lineId);
+
+			const amount = refundCents(item.refund_total);
+
+			if (amount === 0n && !item.physically_returned) {
+				throw billingError(
+					'A refund line must refund money or record a physical return'
+				);
+			}
+
+			selected.push({
+				lineId,
+				amount,
+				physicallyReturned: item.physically_returned
+			});
+		}
+	} catch (err) {
+		return res.status(err.status || 400).json({
+			error: err.message
+		});
+	}
+
+	let connection;
+
+	try {
+		connection = await db.getConnection();
+		await connection.beginTransaction();
+
+		// Serializes refunds and sale edits for this sale.
+		const [sales] = await connection.query(`
+			SELECT id, tax_rate
+			FROM inventory_sales
+			WHERE id = ?
+			FOR UPDATE
+		`, [saleId]);
+
+		if (!sales.length) {
+			throw billingError('Sale not found', 404);
+		}
+
+		const [saleLines] = await connection.query(`
+			SELECT id, subtotal, sales_tax, total
+			FROM inventory_sale_items
+			WHERE inventory_sale_id = ?
+			ORDER BY id
+			FOR UPDATE
+		`, [saleId]);
+
+		const lineMap = new Map(
+			saleLines.map(line => [Number(line.id), line])
+		);
+
+		// Sum all previously recorded refunds for this sale.
+		const [previous] = await connection.query(`
+			SELECT
+				ri.inventory_sale_item_id,
+				SUM(ri.refund_subtotal) AS refunded_subtotal,
+				SUM(ri.refund_sales_tax) AS refunded_tax,
+				SUM(ri.refund_total) AS refunded_total,
+				MAX(ri.physically_returned) AS physically_returned
+			FROM inventory_sale_return_items ri
+			JOIN inventory_sale_returns r
+				ON r.id = ri.inventory_sale_return_id
+			WHERE r.inventory_sale_id = ?
+			GROUP BY ri.inventory_sale_item_id
+		`, [saleId]);
+
+		const previousMap = new Map(
+			previous.map(row => [
+				Number(row.inventory_sale_item_id),
+				row
+			])
+		);
+
+		const calculated = [];
+		let totalSubtotal = 0n;
+		let totalTax = 0n;
+		let totalRefund = 0n;
+
+		for (const input of selected) {
+			const original = lineMap.get(input.lineId);
+
+			if (!original) {
+				throw billingError(
+					'Equipment does not belong to this sale',
+					400
+				);
+			}
+
+			const prior = previousMap.get(input.lineId);
+
+			const originalSubtotal = centsFromDb(original.subtotal);
+			const originalTax = centsFromDb(original.sales_tax);
+			const originalTotal = centsFromDb(original.total);
+
+			const spentSubtotal = prior
+				? centsFromDb(prior.refunded_subtotal) : 0n;
+			const spentTax = prior
+				? centsFromDb(prior.refunded_tax) : 0n;
+			const spentTotal = prior
+				? centsFromDb(prior.refunded_total) : 0n;
+
+			const remainingSubtotal = originalSubtotal - spentSubtotal;
+			const remainingTax = originalTax - spentTax;
+			const remainingTotal = originalTotal - spentTotal;
+
+			if (
+				remainingSubtotal < 0n ||
+				remainingTax < 0n ||
+				remainingTotal < 0n ||
+				remainingSubtotal + remainingTax !== remainingTotal
+			) {
+				throw billingError(
+					'Existing refund amounts are inconsistent',
+					409
+				);
+			}
+
+			if (input.amount > remainingTotal) {
+				throw billingError(
+					'Refund exceeds the remaining equipment balance',
+					409
+				);
+			}
+
+			if (
+				input.physicallyReturned &&
+				Number(prior?.physically_returned ?? 0) === 1
+			) {
+				throw billingError(
+					'This equipment has already been marked returned for this sale',
+					409
+				);
+			}
+
+			// Use the original tax rate, not today's tax rate.
+			let tax = input.amount === remainingTotal
+				? remainingTax
+				: includedTaxCents(
+					input.amount,
+					sales[0].tax_rate
+				);
+
+			// Bound the rounding to the original remaining
+			// subtotal and tax. Final refunds consume exactly
+			// the remaining stored amounts.
+			const minimumTax = input.amount > remainingSubtotal
+				? input.amount - remainingSubtotal : 0n;
+
+			const maximumTax = input.amount < remainingTax
+				? input.amount : remainingTax;
+
+			if (tax < minimumTax) tax = minimumTax;
+			if (tax > maximumTax) tax = maximumTax;
+
+			const subtotal = input.amount - tax;
+
+			calculated.push({
+				lineId: input.lineId,
+				physicallyReturned: input.physicallyReturned,
+				subtotal: money(subtotal),
+				tax: money(tax),
+				total: money(input.amount)
+			});
+
+			totalSubtotal += subtotal;
+			totalTax += tax;
+			totalRefund += input.amount;
+		}
+
+		const [result] = await connection.query(`
+			INSERT INTO inventory_sale_returns (
+				inventory_sale_id,
+				refund_method,
+				refund_reference,
+				reason,
+				notes,
+				refund_subtotal,
+				refund_sales_tax,
+				refund_total
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+		`, [
+			saleId,
+			body.refund_method?.trim() || 'Not Specified',
+			body.refund_reference?.trim() || null,
+			body.reason?.trim() || null,
+			body.notes?.trim() || null,
+			money(totalSubtotal),
+			money(totalTax),
+			money(totalRefund)
+		]);
+
+		for (const line of calculated) {
+			await connection.query(`
+				INSERT INTO inventory_sale_return_items (
+					inventory_sale_return_id,
+					inventory_sale_item_id,
+					physically_returned,
+					refund_subtotal,
+					refund_sales_tax,
+					refund_total
+				) VALUES (?, ?, ?, ?, ?, ?)
+			`, [
+				result.insertId,
+				line.lineId,
+				line.physicallyReturned ? 1 : 0,
+				line.subtotal,
+				line.tax,
+				line.total
+			]);
+		}
+
+		const [saved] = await connection.query(`
+			SELECT id, token, return_date
+			FROM inventory_sale_returns
+			WHERE id = ?
+		`, [result.insertId]);
+
+		await connection.commit();
+
+		res.status(201).json({
+			success: true,
+			...saved[0],
+			refund_subtotal: money(totalSubtotal),
+			refund_sales_tax: money(totalTax),
+			refund_total: money(totalRefund)
+		});
+	} catch (err) {
+		if (connection) {
+			try {
+				await connection.rollback();
+			} catch (rollbackError) {
+				console.error(
+					'Refund rollback failed:',
+					rollbackError
+				);
+			}
+		}
+
+		if (err.code === 'ER_DUP_ENTRY') {
+			return res.status(409).json({
+				error: 'Refund conflict; please retry'
+			});
+		}
+
+		if (err.status) {
+			return res.status(err.status).json({
+				error: err.message
+			});
+		}
+
+		next(err);
+	} finally {
+		if (connection) connection.release();
+	}
+});
 
 
 

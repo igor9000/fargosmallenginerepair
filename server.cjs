@@ -45,10 +45,13 @@ app.use(
 	createPublicInventorySalesRouter({ db })
 );
 
+const createPublicInventorySaleReturnsRouter =
+	require('./src/api/public/inventory-sale-returns.cjs');
 
-
-
-
+app.use(
+	'/api/inventory-sale-returns',
+	createPublicInventorySaleReturnsRouter({ db })
+);
 
 
 

@@ -108,6 +108,50 @@
 				</div>
 			</section>
 
+
+			<section
+				v-if="sale.returns?.length"
+				class="card mb-4"
+			>
+				<div class="card-body">
+					<h2 class="h5 mb-3">Returns & Refunds</h2>
+
+					<p class="small text-muted">
+						For your records, we've included a history of returns and refunds associated with this purchase. You can view each receipt below for more details.
+					</p>
+
+					<div
+						v-for="entry in sale.returns"
+						:key="entry.id"
+						class="d-flex justify-content-between align-items-center border-top py-3 gap-3"
+					>
+						<div>
+							<div class="fw-semibold">
+								{{ Number(entry.refund_total) > 0
+									? 'Refund' : 'Return' }}
+								#{{ entry.id }}
+							</div>
+
+							<div class="small text-muted">
+								{{ formatDate(entry.return_date) }}
+							</div>
+
+							<a
+								:href="`/inventory-sale-returns/${entry.id}/${entry.token}`"
+								class="small"
+							>
+								View Refund Receipt
+							</a>
+						</div>
+
+						<div class="fw-semibold text-nowrap">
+							{{ currency(entry.refund_total) }}
+						</div>
+					</div>
+				</div>
+			</section>
+
+
 			<ReceiptThankYou>
 				Thank you for supporting my small business.
 				I appreciate your purchase and the trust

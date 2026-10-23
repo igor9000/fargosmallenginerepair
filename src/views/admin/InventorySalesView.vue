@@ -104,6 +104,13 @@
 							>
 								Edit
 							</RouterLink>
+
+							<RouterLink
+								:to="`/admin/inventory-sales/${sale.id}/refunds/new`"
+								class="btn btn-sm btn-outline-secondary ms-2"
+							>
+								Return / Refund
+							</RouterLink>
 						</td>
 					</tr>
 

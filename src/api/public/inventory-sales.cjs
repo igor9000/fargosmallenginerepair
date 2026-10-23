@@ -69,6 +69,17 @@ module.exports = function({ db }) {
 				ORDER BY si.sort_order, si.id
 			`, [sale.id]);
 
+			const [returns] = await db.query(`
+				SELECT
+					id,
+					token,
+					return_date,
+					refund_total
+				FROM inventory_sale_returns
+				WHERE inventory_sale_id = ?
+				ORDER BY return_date, id
+			`, [sale.id]);
+
 			res.json({
 				sale_number: sale.sale_number,
 				subtotal: sale.subtotal,
@@ -77,7 +88,8 @@ module.exports = function({ db }) {
 				total: sale.total,
 				payment_method: sale.payment_method,
 				sale_date: sale.sale_date,
-				items
+				items,
+				returns
 			});
 		} catch (err) {
 			next(err);
