@@ -2157,7 +2157,7 @@ function handleInventorySaleError(err, res, next) {
 }
 
 
-// List sales with their equipment.
+// List sales with their equipment
 router.get('/inventory-sales', async (req, res, next) => {
 	try {
 		const [[sales], [items]] = await Promise.all([
@@ -2166,7 +2166,20 @@ router.get('/inventory-sales', async (req, res, next) => {
 					s.*,
 					c.external_id AS customer_external_id,
 					c.first_name,
-					c.last_name
+					c.last_name,
+					(
+						SELECT COALESCE(SUM(r.refund_total), 0)
+						FROM inventory_sale_returns r
+						WHERE r.inventory_sale_id = s.id
+					) AS refunded_total,
+					(
+						SELECT COUNT(DISTINCT ri.inventory_sale_item_id)
+						FROM inventory_sale_return_items ri
+						JOIN inventory_sale_returns r
+							ON r.id = ri.inventory_sale_return_id
+						WHERE r.inventory_sale_id = s.id
+							AND ri.physically_returned = 1
+					) AS returned_item_count
 				FROM inventory_sales s
 				JOIN customers c ON c.id = s.customer_id
 				ORDER BY s.sale_date DESC, s.id DESC
@@ -2204,6 +2217,7 @@ router.get('/inventory-sales', async (req, res, next) => {
 		next(err);
 	}
 });
+
 
 
 // Load a single sale for editing.

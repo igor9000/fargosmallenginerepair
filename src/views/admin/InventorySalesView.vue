@@ -37,9 +37,8 @@
 						<th>Customer</th>
 						<th>Equipment</th>
 						<th>Sale Date</th>
-						<th class="text-end">Subtotal</th>
-						<th class="text-end">Tax</th>
-						<th class="text-end">Total</th>
+						<th class="text-end pe-5">Total</th>
+						<th>Adjustments</th>
 						<th>Receipt</th>
 						<th>Actions</th>
 					</tr>
@@ -74,17 +73,43 @@
 
 						<td>{{ formatDate(sale.sale_date) }}</td>
 
-						<td class="text-end">
-							{{ currency(sale.subtotal) }}
-						</td>
-
-						<td class="text-end">
-							{{ currency(sale.sales_tax) }}
-						</td>
-
-						<td class="text-end fw-semibold">
+						<td class="text-end fw-semibold pe-5">
 							{{ currency(sale.total) }}
 						</td>
+
+						<td>
+							<!-- Financial refund status -->
+							<div v-if="Number(sale.refunded_total) > 0">
+								<span
+									class="badge"
+									:class="
+										Number(sale.refunded_total) >= Number(sale.total)
+											? 'bg-success'
+											: 'bg-warning text-dark'
+									"
+								>
+									{{
+										Number(sale.refunded_total) >= Number(sale.total)
+											? 'Fully refunded'
+											: 'Partial refund'
+									}}
+								</span>
+
+								<div class="small text-muted mt-1">
+									{{ currency(sale.refunded_total) }} refunded
+								</div>
+							</div>
+							<!-- No returns or refunds -->
+							<div
+								v-if="
+									Number(sale.refunded_total) === 0 &&
+									Number(sale.returned_item_count) === 0
+								"
+							>
+								&mdash;
+							</div>
+						</td>
+
 
 						<td>
 							<a
