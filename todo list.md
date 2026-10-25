@@ -25,17 +25,16 @@
    3. venmo/paypal online payment thing?
    4. enforce uniqueness between ids on both service tickets and sales
 10. Admin Inventory
-    2. In the table, add a link to the inventory page
     3. add make, model, etc
 11. Admin Inventory Sales
     1. ability to delete errantly created sales receipts
 11. Inventory Details Page
     1. does bootstrap have a left/right style image gallery?
-    2. Allow preview of inventory if logged in
 12. Customer Admin
     1. Track referral customers
 13. Misc
     1. Add 404 page
+    2. Add a Sold status to inventory
 
 
 
