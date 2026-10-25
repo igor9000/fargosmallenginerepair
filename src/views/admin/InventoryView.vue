@@ -47,14 +47,33 @@
 							{{ item[field] ? 'Yes' : 'No' }}
 						</td>
 
+
 						<td>
-							<RouterLink
-								class="btn btn-sm btn-outline-primary"
-								:to="`/admin/inventory/${item.id}/edit`"
-							>
-								Edit
-							</RouterLink>
+							<div class="d-flex gap-2">
+								<RouterLink
+									class="btn btn-sm btn-outline-primary"
+									:to="`/admin/inventory/${item.id}/edit`"
+								>
+									Edit
+								</RouterLink>
+
+								<RouterLink
+									class="btn btn-sm btn-outline-secondary"
+									:to="{
+										name: 'inventory-item',
+										params: {
+											name: item.slug,
+											sku: item.sku
+										}
+									}"
+									target="_blank"
+									rel="noopener noreferrer"
+								>
+									View
+								</RouterLink>
+							</div>
 						</td>
+
 					</tr>
 
 					<tr v-if="filteredItems.length === 0">

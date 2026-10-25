@@ -161,6 +161,7 @@ async function assertInventoryCanBeListed(connection, inventoryId) {
 					i.id,
 					i.sku,
 					i.name,
+					i.slug,
 					i.price,
 					i.active,
 					i.pending,
