@@ -264,6 +264,7 @@ app.get('/api/inventory', async (req, res) => {
 			LEFT JOIN inventory_images imgs
 				ON imgs.inventory_id = i.id
 				AND imgs.is_primary = 1
+				AND imgs.is_active = 1
 			LEFT JOIN brands b
 				ON i.brand_id = b.id
 			${whereClause}
@@ -327,6 +328,7 @@ app.get('/api/inventory/:sku', async (req, res) => {
 					media_type
 			FROM inventory_images
 			WHERE inventory_id = ?
+				AND is_active = 1
 			ORDER BY
 					CASE
 							WHEN sort_order = 1 THEN 0

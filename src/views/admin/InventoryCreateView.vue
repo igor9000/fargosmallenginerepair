@@ -83,64 +83,156 @@
 				<p class="text-muted small">
 					Enter filenames only. Files must already exist on the media server.
 				</p>
-
+				
 				<div v-for="(media, index) in item.images"
 					:key="media.key" class="card mb-3">
 					<div class="card-body">
-						<div class="row g-3 align-items-end">
-							<div class="col-md-3">
-								<label class="form-label">Media Type</label>
-								<select v-model="media.media_type"
-									class="form-select" @change="mediaTypeChanged(media)">
-									<option value="image">Image</option>
-									<option value="video">Video</option>
-								</select>
+						<div class="row g-3">
+							<!-- Preview -->
+							<div class="col-lg-3">
+								<div class="border rounded bg-light d-flex align-items-center
+									justify-content-center overflow-hidden"
+									style="height: 240px">
+
+									<img
+										v-if="media.media_type === 'image' &&
+											getInventoryMediaUrl(media.url) &&
+											media.previewError !== getInventoryMediaUrl(media.url)"
+										:key="getInventoryMediaUrl(media.url)"
+										:src="getInventoryMediaUrl(media.url)"
+										:alt="media.url"
+										class="w-100 h-100"
+										style="object-fit: contain"
+										@error="media.previewError = getInventoryMediaUrl(media.url)"
+									/>
+
+									<video
+										v-else-if="media.media_type === 'video' && media.url.trim()"
+										:src="getInventoryMediaUrl(media.url)"
+										:poster="getInventoryMediaUrl(media.poster_url) || undefined"
+										class="w-100 h-100"
+										style="object-fit: contain"
+										controls
+										playsinline
+										preload="none"
+									></video>
+
+									<span v-else class="text-muted small">
+										No preview available
+									</span>
+								</div>
 							</div>
 
-							<div class="col-md-9">
-								<label class="form-label">Filename *</label>
-								<input v-model="media.url" class="form-control"
-									placeholder="CM-0057 (1).jpg" maxlength="255"
-									required />
-							</div>
+							<!-- Fields -->
+							<div class="col-lg-9 d-flex flex-column">
+								<div class="row g-3 align-items-center">
 
-							<div class="col-md-8">
-								<label class="form-label">Comment</label>
-								<input v-model="media.comment" class="form-control"
-									maxlength="255" />
-							</div>
+									<!-- Media Type -->
+									<div class="col-md-2">
+										<label class="form-label mb-0">Media Type</label>
+									</div>
 
-							<div v-if="media.media_type === 'video'" class="col-md-4">
-								<label class="form-label">Poster Filename</label>
-								<input v-model="media.poster_url"
-									class="form-control" maxlength="255"
-									placeholder="CM-0057-poster.png" />
-							</div>
+									<div class="col-md-5">
+										<select v-model="media.media_type"
+											class="form-select"
+											@change="mediaTypeChanged(media)">
+											<option value="image">Image</option>
+											<option value="video">Video</option>
+										</select>
+									</div>
 
-							<div v-if="media.media_type === 'image'" class="col-md-4">
-								<label class="form-check">
-									<input type="radio" name="primaryImage"
-										class="form-check-input"
-										:checked="media.is_primary"
-										@change="setPrimary(index)" />
-									<span class="form-check-label">Primary image</span>
-								</label>
-							</div>
+									<!-- Active / Primary -->
+									<div class="col-md-5 d-flex align-items-center
+										gap-3 flex-wrap">
 
-							<div class="col-12 d-flex gap-2">
-								<button type="button" class="btn btn-outline-secondary btn-sm"
-									:disabled="index === 0" @click="moveMedia(index, -1)">
-									↑ Up
-								</button>
-								<button type="button" class="btn btn-outline-secondary btn-sm"
-									:disabled="index === item.images.length - 1"
-									@click="moveMedia(index, 1)">
-									↓ Down
-								</button>
-								<button type="button" class="btn btn-outline-danger btn-sm"
-									@click="removeMedia(index)">
-									Remove
-								</button>
+										<label class="form-check mb-0">
+											<input type="checkbox"
+												v-model="media.is_active"
+												class="form-check-input"
+												@change="ensurePrimary" />
+											<span class="form-check-label">Active</span>
+										</label>
+
+										<label v-if="media.media_type === 'image'"
+											class="form-check mb-0">
+											<input type="radio"
+												name="primaryImage"
+												class="form-check-input"
+												:checked="media.is_primary"
+												:disabled="!media.is_active"
+												@change="setPrimary(index)" />
+											<span class="form-check-label">Primary image</span>
+										</label>
+									</div>
+
+									<!-- Filename / Poster -->
+									<div class="col-md-2">
+										<label class="form-label mb-0">Filename *</label>
+									</div>
+
+									<div class="col-md-10">
+										<div class="row g-2 align-items-center">
+											<div :class="media.media_type === 'video'
+												? 'col-md-6' : 'col-12'">
+												<input v-model="media.url"
+													class="form-control"
+													placeholder="Filename"
+													maxlength="255"
+													required />
+											</div>
+
+											<div v-if="media.media_type === 'video'"
+												class="col-md-6">
+												<div class="d-flex align-items-center gap-2">
+													<label :for="`poster-${media.key}`"
+														class="form-label mb-0 text-nowrap">
+														Poster
+													</label>
+													<input :id="`poster-${media.key}`"
+														v-model="media.poster_url"
+														class="form-control"
+														placeholder="Poster filename"
+														maxlength="255" />
+												</div>
+											</div>
+										</div>
+									</div>
+
+									<!-- Comment -->
+									<div class="col-md-2">
+										<label class="form-label mb-0">Comment</label>
+									</div>
+
+									<div class="col-md-10">
+										<input v-model="media.comment"
+											class="form-control"
+											placeholder="Optional comment"
+											maxlength="255" />
+									</div>
+								</div>
+
+								<!-- Actions -->
+								<div class="d-flex gap-2 mt-auto pt-3">
+									<button type="button"
+										class="btn btn-outline-secondary btn-sm flex-fill"
+										:disabled="index === 0"
+										@click="moveMedia(index, -1)">
+										↑ Up
+									</button>
+
+									<button type="button"
+										class="btn btn-outline-secondary btn-sm flex-fill"
+										:disabled="index === item.images.length - 1"
+										@click="moveMedia(index, 1)">
+										↓ Down
+									</button>
+
+									<button type="button"
+										class="btn btn-outline-danger btn-sm flex-fill"
+										@click="removeMedia(index)">
+										Remove
+									</button>
+								</div>
 							</div>
 						</div>
 					</div>
@@ -232,6 +324,15 @@ const item = ref({
 	images: []
 });
 
+function getInventoryMediaUrl(filename) {
+	const sku = String(item.value.sku ?? '').trim();
+	const name = String(filename ?? '').trim();
+
+	if (!sku || !name) return '';
+
+	return `https://media.fargosmallenginerepair.com/inventory/${encodeURIComponent(sku)}/${encodeURIComponent(name)}`;
+}
+
 function updateSlug() {
 	if (slugEdited.value) return;
 
@@ -244,8 +345,13 @@ function updateSlug() {
 		.replace(/^-|-$/g, '');
 }
 
+
 function addMedia() {
-	const hasPrimary = item.value.images.some(media => media.is_primary);
+	const hasPrimary = item.value.images.some(media =>
+		media.media_type === 'image' &&
+		media.is_active &&
+		media.is_primary
+	);
 
 	item.value.images.push({
 		key: nextMediaKey++,
@@ -253,25 +359,37 @@ function addMedia() {
 		comment: '',
 		media_type: 'image',
 		poster_url: '',
+		is_active: true,
 		is_primary: !hasPrimary
 	});
 }
 
 function setPrimary(index) {
+	const selected = item.value.images[index];
+
+	if (selected.media_type !== 'image' || !selected.is_active) return;
+
 	item.value.images.forEach((media, i) => {
 		media.is_primary = i === index;
 	});
 }
 
 function ensurePrimary() {
-	const images = item.value.images.filter(media => media.media_type === 'image');
+	const images = item.value.images.filter(media =>
+		media.media_type === 'image' && media.is_active
+	);
 
-	if (!images.length) return;
+	const primary = images.find(media => media.is_primary);
 
-	if (!images.some(media => media.is_primary)) {
+	item.value.images.forEach(media => {
+		media.is_primary = media === primary;
+	});
+
+	if (!primary && images.length) {
 		images[0].is_primary = true;
 	}
 }
+
 
 function mediaTypeChanged(media) {
 	if (media.media_type === 'video') {
@@ -351,7 +469,10 @@ onMounted(async () => {
 					comment: image.comment ?? '',
 					media_type: image.media_type,
 					poster_url: image.poster_url ?? '',
-					is_primary: Boolean(image.is_primary)
+					is_primary: Boolean(image.is_primary),
+					is_active: image.is_active == null
+						? true
+						: Boolean(image.is_active)
 				}))
 			};
 
@@ -390,6 +511,7 @@ async function save() {
 					? media.poster_url.trim() || null
 					: null,
 				is_primary: media.is_primary,
+				is_active: media.is_active,
 				sort_order: index + 1
 			})),
 			attributes: attributes.value

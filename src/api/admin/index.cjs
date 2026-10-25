@@ -345,30 +345,35 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 			// Validate media before touching the database.
 			const primaryImages = images.filter(image => image.is_primary);
 
+			const activeImages = images.filter(image =>
+				image.media_type === 'image' && image.is_active
+			);
+
 			if (
 				primaryImages.length > 1 ||
 				images.some(image =>
 					!validFilename(image.url) ||
 					!['image', 'video'].includes(image.media_type) ||
+					typeof image.is_active !== 'boolean' ||
+					typeof image.is_primary !== 'boolean' ||
 					typeof image.comment !== 'string' ||
 					image.comment.length > 255 ||
 					(image.poster_url != null &&
 						image.poster_url !== '' &&
 						!validFilename(image.poster_url)) ||
-					(image.is_primary && image.media_type !== 'image')
+					(image.is_primary &&
+						(image.media_type !== 'image' || !image.is_active))
 				)
 			) {
 				return res.status(400).json({ error: 'Invalid media data' });
 			}
 
-			if (
-				images.some(image => image.media_type === 'image') &&
-				primaryImages.length !== 1
-			) {
+			if (activeImages.length && primaryImages.length !== 1) {
 				return res.status(400).json({
-					error: 'Select one primary image'
+					error: 'Select one active primary image'
 				});
 			}
+
 
 			// Validate attribute IDs and text values.
 			const attributeIds = new Set();
@@ -455,13 +460,14 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 				await connection.query(`
 					INSERT INTO inventory_images (
 						inventory_id, url, sort_order,
-						is_primary, comment, media_type, poster_url
-					) VALUES (?, ?, ?, ?, ?, ?, ?)
+						is_primary, is_active, comment, media_type, poster_url
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				`, [
 					inventoryId,
 					image.url,
 					index + 1,
 					Number(image.is_primary),
+					Number(image.is_active),
 					image.comment,
 					image.media_type,
 					image.poster_url || null
@@ -524,7 +530,7 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 				db.query('SELECT * FROM inventory WHERE id = ?', [id]),
 				db.query(`
 					SELECT id, url, comment, media_type,
-						poster_url, sort_order, is_primary
+						poster_url, sort_order, is_primary, is_active
 					FROM inventory_images
 					WHERE inventory_id = ?
 					ORDER BY sort_order, id
@@ -599,23 +605,35 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 
 			const primaryImages = images.filter(image => image.is_primary);
 
+			const activeImages = images.filter(image =>
+				image.media_type === 'image' && image.is_active
+			);
+
 			if (
+				primaryImages.length > 1 ||
 				images.some(image =>
 					!validFilename(image.url) ||
 					!['image', 'video'].includes(image.media_type) ||
+					typeof image.is_active !== 'boolean' ||
+					typeof image.is_primary !== 'boolean' ||
 					typeof image.comment !== 'string' ||
 					image.comment.length > 255 ||
 					(image.poster_url != null &&
 						image.poster_url !== '' &&
 						!validFilename(image.poster_url)) ||
-					(image.is_primary && image.media_type !== 'image')
-				) ||
-				primaryImages.length > 1 ||
-				(images.some(image => image.media_type === 'image') &&
-					primaryImages.length !== 1)
+					(image.is_primary &&
+						(image.media_type !== 'image' || !image.is_active))
+				)
 			) {
 				return res.status(400).json({ error: 'Invalid media data' });
 			}
+
+			if (activeImages.length && primaryImages.length !== 1) {
+				return res.status(400).json({
+					error: 'Select one active primary image'
+				});
+			}
+
 
 			const attributeIds = new Set();
 
@@ -713,14 +731,15 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 			for (const [index, image] of images.entries()) {
 				await connection.query(`
 					INSERT INTO inventory_images (
-						inventory_id, url, sort_order, is_primary,
-						comment, media_type, poster_url
-					) VALUES (?, ?, ?, ?, ?, ?, ?)
+						inventory_id, url, sort_order,
+						is_primary, is_active, comment, media_type, poster_url
+					) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 				`, [
 					id,
 					image.url,
 					index + 1,
 					Number(image.is_primary),
+					Number(image.is_active),
 					image.comment,
 					image.media_type,
 					image.poster_url || null
