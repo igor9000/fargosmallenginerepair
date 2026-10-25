@@ -5,7 +5,7 @@ const MySQLStore = require('express-mysql-session')(session);
 const bcrypt = require('bcryptjs');
 const { rateLimit } = require('express-rate-limit');
 
-module.exports = function({ db }) {
+module.exports = function({ db, loadInventoryDetails }) {
 	const router = express.Router();
 
 	if (!process.env.ADMIN_PASSWORD_HASH || !process.env.SESSION_SECRET) {
@@ -151,7 +151,10 @@ async function assertInventoryCanBeListed(connection, inventoryId) {
 	}
 }
 
-
+	router.get('/inventory-preview/:sku', requireAdmin, (req, res) => {
+		res.set('Cache-Control', 'private, no-store');
+		return loadInventoryDetails(req, res, true);
+	});
 
 	// inventory	
 	router.get('/inventory', requireAdmin, async (req, res) => {

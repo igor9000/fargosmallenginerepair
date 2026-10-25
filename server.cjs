@@ -26,7 +26,7 @@ const createAdminRouter = require('./src/api/admin/index.cjs');
 
 app.set('trust proxy', process.env.NODE_ENV === 'production' ? 1 : false);
 
-app.use('/api/admin', createAdminRouter({ db }));
+app.use('/api/admin', createAdminRouter({ db, loadInventoryDetails }));
 
 
 const createPublicServiceTicketsRouter =
@@ -281,7 +281,11 @@ app.get('/api/inventory', async (req, res) => {
 
 
 // inventory item details
-app.get('/api/inventory/:sku', async (req, res) => {
+app.get('/api/inventory/:sku', (req, res) =>
+	loadInventoryDetails(req, res, false)
+);
+
+async function loadInventoryDetails(req, res, allowInactive = false) {
 	try {
 		const { sku } = req.params;
 
@@ -306,9 +310,9 @@ app.get('/api/inventory/:sku', async (req, res) => {
 			LEFT JOIN brands b
 				ON i.brand_id = b.id
 			WHERE i.sku = ?
-				AND i.active = 1
+				AND (i.active = 1 OR ? = 1)
 			LIMIT 1
-		`, [sku]);
+		`, [sku, Number(allowInactive)]);
 
 		if (rows.length === 0) {
 			return res.status(404).json({
@@ -367,7 +371,7 @@ app.get('/api/inventory/:sku', async (req, res) => {
 			error: 'Unable to load inventory item'
 		});
 	}
-});
+};
 
 
 

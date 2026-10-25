@@ -116,30 +116,51 @@ const name = ref('')
 const email = ref('')
 const message = ref('')
 
+
 onMounted(async () => {
 	try {
-		const response = await fetch(`/api/inventory/${route.params.sku}`)
+		const sku = encodeURIComponent(String(route.params.sku));
 
-		if (!response.ok) {
-			throw new Error('Inventory item not found')
+		const response = await fetch(`/api/inventory/${sku}`, {
+			credentials: 'same-origin',
+			cache: 'no-store'
+		});
+
+		if (response.ok) {
+			item.value = await response.json();
+		} else if (response.status === 404) {
+			const previewResponse = await fetch(
+				`/api/admin/inventory-preview/${sku}`,
+				{
+					credentials: 'same-origin',
+					cache: 'no-store'
+				}
+			);
+
+			if (!previewResponse.ok) {
+				throw new Error('Inventory item not found');
+			}
+
+			item.value = await previewResponse.json();
+		} else {
+			throw new Error('Unable to load inventory item');
 		}
-
-		item.value = await response.json()
 
 		selectedMedia.value =
 			galleryMedia.value.find(media => media.is_primary) ??
 			galleryMedia.value[0] ??
-			null
+			null;
 
-		message.value = `I'm interested in the ${item.value.name}, can you tell me more?`
+		message.value = `I'm interested in the ${item.value.name}, can you tell me more?`;
 	}
 	catch (err) {
-		error.value = err.message
+		error.value = err.message;
 	}
 	finally {
-		loading.value = false
+		loading.value = false;
 	}
 })
+
 
 
 

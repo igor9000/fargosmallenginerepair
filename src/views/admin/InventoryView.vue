@@ -69,7 +69,7 @@
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									View
+									{{ item.active ? 'View' : 'Preview' }}
 								</RouterLink>
 							</div>
 						</td>
