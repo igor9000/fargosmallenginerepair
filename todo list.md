@@ -25,7 +25,6 @@
    3. venmo/paypal online payment thing?
    4. enforce uniqueness between ids on both service tickets and sales
 10. Admin Inventory
-    1. Move media button to bottom of media
     2. In the table, add a link to the inventory page
     3. add make, model, etc
 11. Admin Inventory Sales
