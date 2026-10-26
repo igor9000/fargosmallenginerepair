@@ -109,6 +109,171 @@ module.exports = function({ db, loadInventoryDetails }) {
 	// Everything below requires authentication.
 	router.use(requireAdmin);
 
+
+	// Lock IDs and prevent duplicates between sales and tickets
+
+	const EXTERNAL_ID_LOCK = 'fms_external_record_id';
+
+	function validExternalNumber(value) {
+		return /^[1-9]\d*$/.test(String(value ?? '')) &&
+			Number(value) <= 4294967295;
+	}
+
+	async function findExternalNumber(connection, number, kind, excludeId = 0) {
+		const [rows] = await connection.query(`
+			SELECT 'service ticket' AS kind
+			FROM service_tickets
+			WHERE ticket_number = ?
+				AND id <> ?
+
+			UNION ALL
+
+			SELECT 'sale' AS kind
+			FROM inventory_sales
+			WHERE sale_number = ?
+				AND id <> ?
+
+			LIMIT 1
+		`, [
+			number,
+			kind === 'service' ? excludeId : 0,
+			number,
+			kind === 'sale' ? excludeId : 0
+		]);
+
+		return rows[0] ?? null;
+	}
+
+	async function assertExternalNumberAvailable(
+		connection, number, kind, excludeId = 0
+	) {
+		const match = await findExternalNumber(
+			connection, number, kind, excludeId
+		);
+
+		if (match) {
+			throw billingError(
+				`Number ${number} is already used by a ${match.kind}`,
+				409
+			);
+		}
+	}
+
+	async function acquireExternalIdLock(connection) {
+		const [[row]] = await connection.query(
+			'SELECT GET_LOCK(?, 10) AS acquired',
+			[EXTERNAL_ID_LOCK]
+		);
+
+		if (Number(row.acquired) !== 1) {
+			throw billingError(
+				'Number validation is busy. Please try again.',
+				503
+			);
+		}
+	}
+
+	async function releaseExternalIdConnection(connection, locked) {
+		if (locked) {
+			try {
+				const [[row]] = await connection.query(
+					'SELECT RELEASE_LOCK(?) AS released',
+					[EXTERNAL_ID_LOCK]
+				);
+
+				if (Number(row.released) !== 1) {
+					throw new Error('Could not release external ID lock');
+				}
+			} catch (err) {
+				console.error('External ID lock release failed:', err);
+				connection.destroy();
+				return;
+			}
+		}
+
+		connection.release();
+	}
+
+	router.get('/external-ids/next', async (req, res, next) => {
+		try {
+			const [[row]] = await db.query(`
+				SELECT GREATEST(
+					(SELECT COALESCE(MAX(ticket_number), 0)
+						FROM service_tickets),
+					(SELECT COALESCE(MAX(sale_number), 0)
+						FROM inventory_sales)
+				) AS current_max
+			`);
+
+			const nextNumber = Number(row.current_max) + 1;
+
+			if (nextNumber > 4294967295) {
+				return res.status(409).json({
+					error: 'External record number range exhausted'
+				});
+			}
+
+			res.set('Cache-Control', 'no-store');
+			res.json({ nextNumber });
+		} catch (err) {
+			next(err);
+		}
+	});
+
+	router.get('/external-ids/check', async (req, res, next) => {
+		const { number, kind, excludeId = '0' } = req.query;
+
+		if (
+			!validExternalNumber(number) ||
+			!['service', 'sale'].includes(kind) ||
+			!(excludeId === '0' || validExternalNumber(excludeId))
+		) {
+			return res.status(400).json({
+				error: 'Invalid external number check'
+			});
+		}
+
+		try {
+			const match = await findExternalNumber(
+				db,
+				Number(number),
+				kind,
+				Number(excludeId)
+			);
+
+			res.set('Cache-Control', 'no-store');
+			res.json({
+				available: !match,
+				usedBy: match?.kind ?? null
+			});
+		} catch (err) {
+			next(err);
+		}
+	});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 	router.use((req, res, next) => {
 		if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method)) {
 			return requireSameOrigin(req, res, next);
@@ -1091,6 +1256,11 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 			});
 		}
 
+		if (err.status) {
+			return res.status(err.status).json({
+				error: err.message
+			});
+		}
 		next(err);
 	}
 
@@ -1174,10 +1344,18 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 		}
 
 		let connection;
+		let numberLock = false;
 
 		try {
 			connection = await db.getConnection();
+			await acquireExternalIdLock(connection);
+			numberLock = true;
+
 			await connection.beginTransaction();
+
+			await assertExternalNumberAvailable(
+				connection, ticket.ticket_number, 'service'
+			);
 			
 			const [result] = await connection.query(`
 				INSERT INTO service_tickets (
@@ -1217,7 +1395,9 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 
 			handleServiceTicketError(err, res, next);
 		} finally {
-			if (connection) connection.release();
+			if (connection) {
+				await releaseExternalIdConnection(connection, numberLock);
+			}
 		}
 	});
 
@@ -1246,10 +1426,17 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 		}
 
 		let connection;
+		let numberLock = false;
 
 		try {
 			connection = await db.getConnection();
+			await acquireExternalIdLock(connection);
+			numberLock = true;
+
 			await connection.beginTransaction();
+			await assertExternalNumberAvailable(
+				connection, ticket.ticket_number, 'service', id
+			);
 
 			const [existing] = await connection.query(
 				'SELECT id FROM service_tickets WHERE id = ? FOR UPDATE',
@@ -1308,7 +1495,9 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 
 			handleServiceTicketError(err, res, next);
 		} finally {
-			if (connection) connection.release();
+			if (connection) {
+				await releaseExternalIdConnection(connection, numberLock);
+			}
 		}
 	});
 
@@ -2300,10 +2489,21 @@ async function saveInventorySale(req, res, next, saleId = null) {
 	}
 
 	let connection;
+	let numberLock = false;
 
 	try {
 		connection = await db.getConnection();
+		await acquireExternalIdLock(connection);
+		numberLock = true;
+
 		await connection.beginTransaction();
+
+		await assertExternalNumberAvailable(
+			connection,
+			input.sale_number,
+			'sale',
+			saleId ?? 0
+		);
 
 		let existingSale = null;
 		let oldIds = [];
@@ -2545,7 +2745,9 @@ async function saveInventorySale(req, res, next, saleId = null) {
 
 		handleInventorySaleError(err, res, next);
 	} finally {
-		if (connection) connection.release();
+		if (connection) {
+			await releaseExternalIdConnection(connection, numberLock);
+		}
 	}
 }
 

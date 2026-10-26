@@ -29,9 +29,14 @@
 					min="1"
 					max="4294967295"
 					step="1"
-					class="form-control"
+					class="form-control"					
+					@input="numberConflict = ''"
+					@blur="checkExternalNumber"
 					required
 				/>
+				<div v-if="numberConflict" class="text-danger small mt-1">
+					{{ numberConflict }}
+				</div>
 				<div class="form-text">Assigned by the external system.</div>
 			</div>
 
@@ -228,6 +233,7 @@ const loading = ref(true);
 const saving = ref(false);
 const loadFailed = ref(false);
 const error = ref('');
+const numberConflict = ref('');
 
 const customers = ref([]);
 const customerSearch = ref('');
@@ -268,6 +274,45 @@ const customerReportUrl = computed(() => {
 		`${encodeURIComponent(ticket.value.ticket_number)}/` +
 		encodeURIComponent(token.value);
 });
+
+
+async function checkExternalNumber() {
+	const number = String(ticket.value.ticket_number ?? '');
+
+	if (!/^[1-9]\d*$/.test(number) ||
+		Number(number) > 4294967295) {
+		numberConflict.value = 'Enter a valid ticket number';
+		return false;
+	}
+
+	const params = new URLSearchParams({
+		number,
+		kind: 'service',
+		excludeId: isEditing.value ? String(ticketId.value) : '0'
+	});
+
+	try {
+		const response = await fetch(
+			`/api/admin/external-ids/check?${params}`,
+			{ credentials: 'same-origin', cache: 'no-store' }
+		);
+
+		if (!response.ok) {
+			throw new Error('Number check failed');
+		}
+
+		const result = await response.json();
+
+		numberConflict.value = result.available
+			? ''
+			: `Already used by a ${result.usedBy}`;
+
+		return result.available;
+	} catch (err) {
+		numberConflict.value = 'Unable to verify ticket number';
+		return false;
+	}
+}
 
 async function copyCustomerReportUrl() {
 	if (!customerReportUrl.value) return;
@@ -366,6 +411,20 @@ onMounted(async () => {
 
 		customers.value = await customersResponse.json();
 
+		if (!isEditing.value) {
+			const nextResponse = await fetch(
+				'/api/admin/external-ids/next',
+				{ credentials: 'same-origin', cache: 'no-store' }
+			);
+
+			if (!nextResponse.ok) {
+				throw new Error('Unable to suggest next ticket number');
+			}
+
+			const { nextNumber } = await nextResponse.json();
+			ticket.value.ticket_number = nextNumber;
+		}
+
 		if (isEditing.value) {
 			if (!Number.isSafeInteger(ticketId.value) || ticketId.value < 1) {
 				throw new Error('Invalid ticket ID');
@@ -424,6 +483,10 @@ async function save() {
 	error.value = '';
 
 	try {
+		if (!(await checkExternalNumber())) {
+			throw new Error(numberConflict.value);
+		}
+
 		const url = isEditing.value
 			? `/api/admin/service-tickets/${ticketId.value}`
 			: '/api/admin/service-tickets';

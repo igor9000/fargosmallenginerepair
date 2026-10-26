@@ -35,8 +35,13 @@
 					max="4294967295"
 					step="1"
 					class="form-control"
+					@input="numberConflict = ''"
+					@blur="checkExternalNumber"
 					required
 				/>
+				<div v-if="numberConflict" class="text-danger small mt-1">
+					{{ numberConflict }}
+				</div>
 				<div class="form-text">
 					Assigned by the external system.
 				</div>
@@ -217,9 +222,49 @@ const inventory = ref([]);
 const customers = ref([]);
 const customerSearch = ref('');
 const inventorySearch = ref('');
+const numberConflict = ref('');
 
 // Existing sold items are permitted while editing their own sale.
 const originalInventoryIds = ref([]);
+
+async function checkExternalNumber() {
+	const number = String(sale.value.sale_number ?? '');
+
+	if (!/^[1-9]\d*$/.test(number) ||
+		Number(number) > 4294967295) {
+		numberConflict.value = 'Enter a valid sale number';
+		return false;
+	}
+
+	const params = new URLSearchParams({
+		number,
+		kind: 'sale',
+		excludeId: isEditing.value ? String(saleId.value) : '0'
+	});
+
+	try {
+		const response = await fetch(
+			`/api/admin/external-ids/check?${params}`,
+			{ credentials: 'same-origin', cache: 'no-store' }
+		);
+
+		if (!response.ok) {
+			throw new Error('Number check failed');
+		}
+
+		const result = await response.json();
+
+		numberConflict.value = result.available
+			? ''
+			: `Already used by a ${result.usedBy}`;
+
+		return result.available;
+	} catch (err) {
+		numberConflict.value = 'Unable to verify sale number';
+		return false;
+	}
+}
+
 
 let nextKey = 1;
 
@@ -348,6 +393,20 @@ onMounted(async () => {
 		inventory.value = await inventoryResponse.json();
 		customers.value = await customersResponse.json();
 
+		if (!isEditing.value) {
+			const nextResponse = await fetch(
+				'/api/admin/external-ids/next',
+				{ credentials: 'same-origin', cache: 'no-store' }
+			);
+
+			if (!nextResponse.ok) {
+				throw new Error('Unable to suggest next sale number');
+			}
+
+			const { nextNumber } = await nextResponse.json();
+			sale.value.sale_number = nextNumber;
+		}
+
 		if (isEditing.value) {
 			if (!Number.isSafeInteger(saleId.value) || saleId.value < 1) {
 				throw new Error('Invalid sale ID');
@@ -398,6 +457,9 @@ async function save() {
 	error.value = '';
 
 	try {
+		if (!(await checkExternalNumber())) {
+			throw new Error(numberConflict.value);
+		}
 		const selectedIds = sale.value.items.map(
 			item => Number(item.inventory_id)
 		);

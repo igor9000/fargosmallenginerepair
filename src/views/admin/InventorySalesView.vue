@@ -157,6 +157,7 @@ const sales = ref([]);
 const search = ref('');
 const loading = ref(true);
 const error = ref('');
+const numberConflict = ref('');
 
 function customerName(sale) {
 	return [sale.first_name, sale.last_name]
