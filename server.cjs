@@ -379,9 +379,13 @@ async function loadInventoryDetails(req, res, allowInactive = false) {
 app.get('/sitemap.xml', async (req, res) => {
 	try {
 		const [inventory] = await db.query(`
-			SELECT sku
+			SELECT sku, slug
 			FROM inventory
 			WHERE active = 1
+				AND sku IS NOT NULL
+				AND sku <> ''
+				AND slug IS NOT NULL
+				AND slug <> ''
 		`);
 
 		const staticUrls = [
@@ -393,7 +397,7 @@ app.get('/sitemap.xml', async (req, res) => {
 		];
 
 		const inventoryUrls = inventory.map(item =>
-			`https://www.fargosmallenginerepair.com/inventory/${encodeURIComponent(item.sku)}`
+			`https://www.fargosmallenginerepair.com/inventory/${encodeURIComponent(item.slug)}/${encodeURIComponent(item.sku)}`
 		);
 
 		const urls = [...staticUrls, ...inventoryUrls];
