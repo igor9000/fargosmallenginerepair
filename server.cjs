@@ -254,6 +254,7 @@ app.get('/api/inventory', async (req, res) => {
 				i.clearance,
 				it.id AS type_id,
 				it.name AS type_name,
+				it.slug AS type_slug,
 				it.description AS type_description,
 				imgs.url AS image_url,
 				b.name AS brand_name,
@@ -278,6 +279,32 @@ app.get('/api/inventory', async (req, res) => {
 		res.status(500).json({ error: 'Unable to load inventory' });
 	}
 });
+
+
+
+
+// inventory by type
+app.get('/api/inventory/types', async (req, res) => {
+	try {
+		const [types] = await db.query(`
+			SELECT id, name, description, slug
+			FROM inventory_types
+			ORDER BY name
+		`);
+
+		res.json(types);
+	} catch (error) {
+		console.error('Inventory types error:', error);
+		res.status(500).json({
+			error: 'Unable to load inventory types'
+		});
+	}
+});
+
+
+
+
+
 
 
 // inventory item details
@@ -400,7 +427,12 @@ app.get('/sitemap.xml', async (req, res) => {
 			`https://www.fargosmallenginerepair.com/inventory/${encodeURIComponent(item.slug)}/${encodeURIComponent(item.sku)}`
 		);
 
-		const urls = [...staticUrls, ...inventoryUrls];
+		const typeUrls = types.map(type =>
+			`https://www.fargosmallenginerepair.com/inventory/${encodeURIComponent(type.slug)}/`
+		);
+
+
+		const urls = [...staticUrls, ...typeUrls, ...inventoryUrls];
 
 		const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

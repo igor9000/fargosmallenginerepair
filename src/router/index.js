@@ -33,6 +33,11 @@ const router = createRouter({
 			component: () => import('../views/InventoryView.vue')
 		},
 		{
+			path: '/inventory/:typeSlug',
+			name: 'inventory-type',
+			component: () => import('../views/InventoryView.vue')
+		},
+		{
 			path: '/inventory/:name/:sku',
 			name: 'inventory-item',
 			component: () => import('../views/InventoryItemView.vue'),

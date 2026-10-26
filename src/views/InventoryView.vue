@@ -1,6 +1,7 @@
 <script setup>
 import { useHead } from '@unhead/vue';
 import { ref, computed, onMounted } from 'vue';
+import { useRoute } from 'vue-router';
 import inventorycard from '../components/inventory-card.vue';
 import inventoryfeaturesbanner from '../components/inventory-features-banner.vue';
 
@@ -16,6 +17,45 @@ useHead({
 	]
 });
 
+
+const route = useRoute();
+const inventoryTypes = ref([]);
+
+const typeSlug = computed(() =>
+	String(route.params.typeSlug ?? '')
+);
+
+const selectedType = computed(() =>
+	inventoryTypes.value.find(type =>
+		type.slug === typeSlug.value
+	) ?? null
+);
+
+const visibleInventory = computed(() => {
+	if (!typeSlug.value) {
+		return inventoryByType.value;
+	}
+
+	if (!selectedType.value) {
+		return [];
+	}
+
+	const group = inventoryByType.value.find(type =>
+		type.slug === typeSlug.value
+	);
+
+	return [group ?? {
+		id: selectedType.value.id,
+		name: selectedType.value.name,
+		description: selectedType.value.description,
+		slug: selectedType.value.slug,
+		items: []
+	}];
+});
+
+
+
+
 const inventoryByType = computed(() => {
 	const groups = new Map();
 
@@ -24,6 +64,7 @@ const inventoryByType = computed(() => {
 			groups.set(item.type_id, {
 				id: item.type_id,
 				name: item.type_name,
+				slug: item.type_slug,
 				description: item.type_description,
 				items: []
 			});
@@ -43,18 +84,23 @@ const error = ref(null)
 
 onMounted(async () => {
 	try {
-		const response = await fetch('/api/inventory')
+		const [inventoryResponse, typesResponse] =
+			await Promise.all([
+				fetch('/api/inventory'),
+				fetch('/api/inventory/types')
+			]);
 
-		if (!response.ok) {
-			throw new Error(`HTTP ${response.status}`)
+		if (!inventoryResponse.ok || !typesResponse.ok) {
+			throw new Error('Unable to load inventory');
 		}
 
-		inventory.value = await response.json()
+		inventory.value = await inventoryResponse.json();
+		inventoryTypes.value = await typesResponse.json();
 	} catch (err) {
-		console.error(err)
-		error.value = 'Unable to load inventory'
+		console.error(err);
+		error.value = 'Unable to load inventory';
 	} finally {
-		loading.value = false
+		loading.value = false;
 	}
 });
 </script>
@@ -68,13 +114,21 @@ onMounted(async () => {
 				<div class="row justify-content-center">
 					<div class="col-lg-9 text-center">
 
-						<h1 class="display-5 fw-bold mb-3">
-							Outdoor Equipment For Sale
-						</h1>
 
-						<p class="lead text-muted mb-0">
-							Quality used equipment without the new equipment price tag.
-						</p>
+					<h1 class="display-5 fw-bold mb-3">
+						{{ selectedType?.name ?? (
+							typeSlug ? 'Equipment Type Not Found' : 'Outdoor Equipment For Sale'
+						) }}
+					</h1>
+
+					<p class="lead text-muted mb-0">
+						{{ selectedType?.description ??
+							(typeSlug
+								? 'This equipment category does not exist.'
+								: 'Quality used equipment without the new equipment price tag.')
+						}}
+					</p>
+
 
 					</div>
 				</div>
@@ -100,7 +154,7 @@ onMounted(async () => {
 			<inventoryfeaturesbanner :isFreeDeliveryPromoActive />
 
 			<template
-				v-for="(type, index) in inventoryByType"
+				v-for="(type, index) in visibleInventory"
 				:key="type.id"
 			>
 				<section class="py-5">
@@ -128,6 +182,10 @@ onMounted(async () => {
 									:item
 								 />
 							</div>
+
+							<p v-if="!type.items.length" class="text-muted">
+								No equipment currently available in this category.
+							</p>
 						</section>
 					</div>
 				</section>
