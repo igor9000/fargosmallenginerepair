@@ -113,16 +113,19 @@
 				></textarea>
 			</div>
 
-			<ServiceTicketMediaEditor
+			<AdminMediaEditor
+				class="mt-3"
 				title="Diagnostic Media"
 				category="diagnostic"
 				:entries="categoryMedia('diagnostic')"
 				:get-media-url="mediaUrl"
+				filename-field="filename"
+				poster-field="poster_filename"
+				:comment-multiline="true"
 				@add="addMedia"
 				@remove="removeMedia"
 				@move="moveMedia"
 			/>
-
 
 			<!-- Service -->
 			<div class="col-12 mt-4">
@@ -137,16 +140,19 @@
 				></textarea>
 			</div>
 
-			<ServiceTicketMediaEditor
+			<AdminMediaEditor
+				class="mt-3"
 				title="Service Media"
 				category="service"
 				:entries="categoryMedia('service')"
 				:get-media-url="mediaUrl"
+				filename-field="filename"
+				poster-field="poster_filename"
+				:comment-multiline="true"
 				@add="addMedia"
 				@remove="removeMedia"
 				@move="moveMedia"
 			/>
-
 
 			<ServiceTicketChargesEditor
 				v-if="isEditing"
@@ -209,7 +215,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
-import ServiceTicketMediaEditor from './ServiceTicketMediaEditor.vue';
+import AdminMediaEditor from '@/components/admin/AdminMediaEditor.vue';
 import ServiceTicketChargesEditor from './ServiceTicketChargesEditor.vue';
 
 const route = useRoute();
