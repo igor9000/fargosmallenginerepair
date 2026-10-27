@@ -58,35 +58,28 @@
 				</div>
 			</section>
 
+			<!-- Diagnostic Notes -->
 			<section
-				v-if="ticket.diagnostic.notes || ticket.diagnostic.media.length > 0"
+				v-if="ticket.diagnostic.notes"
 				class="card mb-4"
 			>
 				<div class="card-body">
 					<h2 class="h4 mb-3">Diagnostic Report</h2>
 
 					<p v-if="ticket.diagnostic.notes" class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.diagnostic.notes }}</p>
-
-					<MediaGallery
-						:entries="ticket.diagnostic.media"
-						title="Diagnostic Photos & Videos"
-					/>
 				</div>
 			</section>
 
-			<section v-if="ticket.service && (ticket.service.notes || ticket.service.media.length > 0)" class="card mb-4">
+			<!-- Service Notes -->
+			<section v-if="ticket.service && ticket.service.notes" class="card mb-4">
 				<div class="card-body">
 					<h2 class="h4 mb-3">Service Performed</h2>
 
 					<p v-if="ticket.service.notes" class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.service.notes }}</p>
-
-					<MediaGallery
-						:entries="ticket.service.media"
-						title="Service Photos & Videos"
-					/>
 				</div>
 			</section>
 
+			<!-- Billing -->
 			<section
 				v-if="ticket.billing"
 				class="card mb-4"
@@ -164,6 +157,31 @@
 							</tbody>
 						</table>
 					</div>
+				</div>
+			</section>
+
+			<!-- Diagnostic Media -->
+			<section
+				v-if="ticket.diagnostic.media.length > 0"
+				class="card mb-4"
+			>
+				<div class="card-body">
+					<h2 class="h4 mb-3">Diagnostic Media</h2>
+					<MediaGallery
+						:entries="ticket.diagnostic.media"
+						title="Diagnostic Photos & Videos"
+					/>
+				</div>
+			</section>
+
+			<!-- Service Media -->
+			<section v-if="ticket.service && ticket.service.media.length > 0" class="card mb-4">
+				<div class="card-body">
+					<h2 class="h4 mb-3">Service Media</h2>
+					<MediaGallery
+						:entries="ticket.service.media"
+						title="Service Photos & Videos"
+					/>
 				</div>
 			</section>
 
