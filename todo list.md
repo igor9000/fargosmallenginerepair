@@ -19,7 +19,6 @@
    3. in the table, copy the URL for the ticket
    4. add warranty terms?
    5. add equipments? make, model, etc
-   6. make media thing like the inventory version?
 9. Admin Inventory/Tickets
    1. active flag for receipts (turn them off if something crazy happens)
    2. venmo/paypal online payment thing?
