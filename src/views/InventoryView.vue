@@ -163,8 +163,6 @@ onMounted(async () => {
 		</section>
 
 		<template v-else>
-			<inventoryfeaturesbanner :isFreeDeliveryPromoActive />
-
 			<template
 				v-for="(type, index) in visibleInventory"
 				:key="type.id"
@@ -203,6 +201,8 @@ onMounted(async () => {
 				</section>
 
 			</template>
+
+			<inventoryfeaturesbanner :isFreeDeliveryPromoActive />
 		</template>
 
 
