@@ -26,11 +26,51 @@
 						</RouterLink>
 					</li>
 
-					<li class="nav-item">
-						<RouterLink class="nav-link" to="/inventory">
+
+					<li class="nav-item dropdown d-flex align-items-center">
+						<RouterLink
+							class="nav-link pe-1"
+							to="/inventory">
 							Inventory
 						</RouterLink>
+
+						<button
+							type="button"
+							class="nav-link dropdown-toggle dropdown-toggle-split px-1"
+							data-bs-toggle="dropdown"
+							aria-expanded="false"
+							aria-label="Choose inventory category">
+						</button>
+
+						<ul class="dropdown-menu dropdown-menu-end">
+							<li>
+								<RouterLink class="dropdown-item" to="/inventory/all">
+									All Inventory
+								</RouterLink>
+							</li>
+
+							<li>
+								<RouterLink class="dropdown-item" to="/inventory/lawn-mowers">
+									Lawn Mowers
+								</RouterLink>
+							</li>
+
+							<li>
+								<RouterLink class="dropdown-item" to="/inventory/snow-blowers">
+									Snow Blowers
+								</RouterLink>
+							</li>
+
+							<li><hr class="dropdown-divider"></li>
+
+							<li>
+								<RouterLink class="dropdown-item" to="/inventory/other-equipment">
+									Other Equipment
+								</RouterLink>
+							</li>
+						</ul>
 					</li>
+
 
 					<li class="nav-item">
 						<RouterLink class="nav-link" to="/about">

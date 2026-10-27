@@ -30,6 +30,11 @@ const router = createRouter({
 		{
 			path: '/inventory',
 			name: 'inventory',
+			component: () => import('../views/InventoryLandingView.vue')
+		},
+		{
+			path: '/inventory/:typeSlug',
+			name: 'inventory-type',
 			component: () => import('../views/InventoryView.vue')
 		},
 		{

@@ -5,21 +5,12 @@ import { useRoute } from 'vue-router';
 import inventorycard from '../components/inventory-card.vue';
 import inventoryfeaturesbanner from '../components/inventory-features-banner.vue';
 
-useHead({
-	title: 'Outdoor Equipment for Sale in Fargo, ND | Fargo Small Engine Repair',
-
-	meta: [
-		{
-			name: 'description',
-			content:
-				'Shop inspected and serviced used outdoor power equipment for sale in Fargo, ND, with a 30-day warranty and free Fargo-Moorhead delivery.'
-		}
-	]
-});
-
-
 const route = useRoute();
 const inventoryTypes = ref([]);
+const isFreeDeliveryPromoActive = true;
+const inventory = ref([])
+const loading = ref(true)
+const error = ref(null)
 
 const typeSlug = computed(() =>
 	String(route.params.typeSlug ?? '')
@@ -31,30 +22,32 @@ const selectedType = computed(() =>
 	) ?? null
 );
 
+const excludedFromOther = new Set([
+	'lawn-mowers',
+	'snow-blowers'
+]);
+
+const currentFilter = computed(() => {
+	const slug = String(route.params.typeSlug ?? 'all');
+
+	return slug === 'all-equipment' ? 'all' : slug;
+});
+
 const visibleInventory = computed(() => {
-	if (!typeSlug.value) {
+	if (currentFilter.value === 'all') {
 		return inventoryByType.value;
 	}
 
-	if (!selectedType.value) {
-		return [];
+	if (currentFilter.value === 'other-equipment') {
+		return inventoryByType.value.filter(type =>
+			!excludedFromOther.has(type.slug)
+		);
 	}
 
-	const group = inventoryByType.value.find(type =>
-		type.slug === typeSlug.value
+	return inventoryByType.value.filter(type =>
+		type.slug === currentFilter.value
 	);
-
-	return [group ?? {
-		id: selectedType.value.id,
-		name: selectedType.value.name,
-		description: selectedType.value.description,
-		slug: selectedType.value.slug,
-		items: []
-	}];
 });
-
-
-
 
 const inventoryByType = computed(() => {
 	const groups = new Map();
@@ -76,11 +69,31 @@ const inventoryByType = computed(() => {
 	return Array.from(groups.values());
 });
 
+const pageTitle = computed(() => {
+	if (currentFilter.value === 'all') {
+		return 'All Equipment For Sale';
+	}
 
-const isFreeDeliveryPromoActive = true;
-const inventory = ref([])
-const loading = ref(true)
-const error = ref(null)
+	if (currentFilter.value === 'other-equipment') {
+		return 'Other Equipment For Sale';
+	}
+
+	return selectedType.value
+		? `${selectedType.value.name} For Sale`
+		: 'Equipment For Sale';
+});
+
+useHead(() => ({
+	title: `${pageTitle.value} in Fargo, ND | Fargo Small Engine Repair`,
+
+	meta: [
+		{
+			name: 'description',
+			content: `Shop inspected and serviced ${pageTitle.value.toLowerCase()} at Fargo Small Engine Repair. 30-day warranty and free local delivery in Fargo-Moorhead.`
+		}
+	]
+}));
+
 
 onMounted(async () => {
 	try {
@@ -116,19 +129,18 @@ onMounted(async () => {
 
 
 					<h1 class="display-5 fw-bold mb-3">
-						{{ selectedType?.name ?? (
-							typeSlug ? 'Equipment Type Not Found' : 'Outdoor Equipment For Sale'
-						) }}
+						{{ pageTitle }}
 					</h1>
 
-					<p class="lead text-muted mb-0">
-						{{ selectedType?.description ??
-							(typeSlug
-								? 'This equipment category does not exist.'
-								: 'Quality used equipment without the new equipment price tag.')
+					<p v-if="!loading && !error" class="lead text-muted mb-0">
+						{{
+							currentFilter === 'all'
+								? 'Browse our complete selection of inspected and serviced outdoor power equipment.'
+								: currentFilter === 'other-equipment'
+									? 'Explore our selection of inspected and serviced used outdoor power equipment.'
+									: selectedType?.description ?? 'This equipment category does not exist.'
 						}}
 					</p>
-
 
 					</div>
 				</div>
