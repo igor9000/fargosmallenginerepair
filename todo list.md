@@ -21,9 +21,9 @@
    5. add equipments? make, model, etc
    6. make media thing like the inventory version?
 9. Admin Inventory/Tickets
-   2. active flag for receipts (turn them off if something crazy happens)
-   3. venmo/paypal online payment thing?
-   4. enforce uniqueness between ids on both service tickets and sales
+   1. active flag for receipts (turn them off if something crazy happens)
+   2. venmo/paypal online payment thing?
+   3. Add move to top/move to bottom buttons
 10. Admin Inventory
     3. add make, model, etc
 11. Admin Inventory Sales
@@ -36,7 +36,7 @@
     1. Add 404 page
     2. Add a Sold status to inventory
 14. Service Tickets
-    1. Order the ticket stuff based on status (diagnostic complete, diagnosis first; services complete, line items then services then diagnostic )
+    1. N/A
 
 
 
