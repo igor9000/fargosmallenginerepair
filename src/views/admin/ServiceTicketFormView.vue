@@ -128,8 +128,7 @@
 				poster-field="poster_filename"
 				:comment-multiline="true"
 				@add="addMedia"
-				@remove="removeMedia"
-				@move="moveMedia"
+				@update:entries="updateCategoryMedia('diagnostic', $event)"
 			/>
 
 			<!-- Service -->
@@ -155,8 +154,7 @@
 				poster-field="poster_filename"
 				:comment-multiline="true"
 				@add="addMedia"
-				@remove="removeMedia"
-				@move="moveMedia"
+				@update:entries="updateCategoryMedia('service', $event)"
 			/>
 
 			<ServiceTicketChargesEditor
@@ -331,29 +329,21 @@ function addMedia(category) {
 	});
 }
 
-function removeMedia(entry) {
-	const index = media.value.indexOf(entry);
+// Accept the editor's new order for one category only.
+// Keep the other category's entries in their existing positions.
+function updateCategoryMedia(category, entries) {
+	let index = 0;
 
-	if (index !== -1) {
-		media.value.splice(index, 1);
-	}
-}
+	const updated = media.value.flatMap(entry => {
+		if (entry.category !== category) return [entry];
 
-function moveMedia(entry, direction) {
-	const categoryEntries = media.value.filter(
-		item => item.category === entry.category
-	);
+		return index < entries.length
+			? [entries[index++]]
+			: [];
+	});
 
-	const index = categoryEntries.indexOf(entry);
-	const target = categoryEntries[index + direction];
-
-	if (!target) return;
-
-	const from = media.value.indexOf(entry);
-	const to = media.value.indexOf(target);
-
-	[media.value[from], media.value[to]] =
-		[media.value[to], media.value[from]];
+	// Also supports additional entries if the editor ever adds them.
+	media.value = [...updated, ...entries.slice(index)];
 }
 
 function categoryMedia(category) {

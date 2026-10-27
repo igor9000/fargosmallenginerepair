@@ -79,8 +79,7 @@
 				:show-flags="true"
 				:comment-max-length="255"
 				@add="addMedia"
-				@remove="removeMediaEntry"
-				@move="moveMediaEntry"
+				@update:entries="updateMediaEntries"
 				@set-primary="setPrimaryEntry"
 				@active-change="ensurePrimary"
 				@media-type-change="mediaTypeChanged"
@@ -244,34 +243,9 @@ function mediaTypeChanged(media) {
 	ensurePrimary();
 }
 
-function removeMedia(index) {
-	item.value.images.splice(index, 1);
+function updateMediaEntries(entries) {
+	item.value.images = entries;
 	ensurePrimary();
-}
-
-function moveMedia(index, direction) {
-	const target = index + direction;
-
-	if (target < 0 || target >= item.value.images.length) return;
-
-	const media = item.value.images.splice(index, 1)[0];
-	item.value.images.splice(target, 0, media);
-}
-
-function removeMediaEntry(entry) {
-	const index = item.value.images.indexOf(entry);
-
-	if (index !== -1) {
-		removeMedia(index);
-	}
-}
-
-function moveMediaEntry(entry, direction) {
-	const index = item.value.images.indexOf(entry);
-
-	if (index !== -1) {
-		moveMedia(index, direction);
-	}
 }
 
 function setPrimaryEntry(entry) {

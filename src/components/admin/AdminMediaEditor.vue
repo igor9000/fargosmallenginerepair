@@ -158,29 +158,42 @@
 						</div>
 
 						<!-- Actions -->
-						<div class="d-flex gap-2 mt-auto pt-3">
+						<div class="d-flex flex-wrap gap-2 mt-auto pt-3">
 							<button type="button"
-								class="btn btn-outline-secondary btn-sm flex-fill"
+								class="btn btn-outline-secondary btn-sm flex-grow-1"
 								:disabled="index === 0"
-								@click="emit('move', entry, -1)">
+								@click="moveMedia(index, 0)">
+								⇈ Move to Top
+							</button>
+
+							<button type="button"
+								class="btn btn-outline-secondary btn-sm flex-grow-1"
+								:disabled="index === 0"
+								@click="moveMedia(index, index - 1)">
 								↑ Up
 							</button>
 
 							<button type="button"
-								class="btn btn-outline-secondary btn-sm flex-fill"
+								class="btn btn-outline-secondary btn-sm flex-grow-1"
 								:disabled="index === entries.length - 1"
-								@click="emit('move', entry, 1)">
+								@click="moveMedia(index, index + 1)">
 								↓ Down
 							</button>
 
 							<button type="button"
-								class="btn btn-outline-danger btn-sm flex-fill"
-								@click="emit('remove', entry)">
+								class="btn btn-outline-secondary btn-sm flex-grow-1"
+								:disabled="index === entries.length - 1"
+								@click="moveMedia(index, entries.length - 1)">
+								⇊ Move to Bottom
+							</button>
+
+							<button type="button"
+								class="btn btn-outline-danger btn-sm flex-grow-1"
+								@click="removeMedia(entry)">
 								Remove
 							</button>
 						</div>
 					</div>
-
 				</div>
 			</div>
 		</div>
@@ -233,8 +246,7 @@ const props = defineProps({
 
 const emit = defineEmits([
 	'add',
-	'remove',
-	'move',
+	'update:entries',
 	'set-primary',
 	'active-change',
 	'media-type-change'
@@ -254,5 +266,29 @@ function posterUrl(entry) {
 	).trim();
 
 	return filename ? props.getMediaUrl(filename) || '' : '';
+}
+
+function removeMedia(entry) {
+	emit('update:entries', props.entries.filter(
+		item => item !== entry
+	));
+}
+
+
+function moveMedia(index, target) {
+	if (
+		index < 0 ||
+		index >= props.entries.length ||
+		index === target ||
+		target < 0 ||
+		target >= props.entries.length
+	) return;
+
+	const reordered = [...props.entries];
+
+	const [entry] = reordered.splice(index, 1);
+	reordered.splice(target, 0, entry);
+
+	emit('update:entries', reordered);
 }
 </script>
