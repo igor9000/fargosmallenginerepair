@@ -35,7 +35,8 @@
 13. Misc
     1. Add 404 page
     2. Add a Sold status to inventory
-
+14. Service Tickets
+    1. Order the ticket stuff based on status (diagnostic complete, diagnosis first; services complete, line items then services then diagnostic )
 
 
 
