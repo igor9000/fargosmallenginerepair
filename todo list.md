@@ -30,6 +30,8 @@
 11. Inventory Landing Page
     1. make other equipment cards the same size as featured
     2. change from "1 available" to "Last one!" or something?
+11. Inventory List
+    1. Mobile images aspect ratio is horizontal and it needs to be vertical
 11. Inventory Details Page
     1. does bootstrap have a left/right style image gallery?
     2. back button to "all inventory"?
