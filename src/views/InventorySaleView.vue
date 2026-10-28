@@ -179,6 +179,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useHead } from '@unhead/vue';
 import ReceiptHeader from '../components/receipts/ReceiptHeader.vue';
 import ReceiptThankYou from '../components/receipts/ReceiptThankYou.vue';
 
@@ -194,6 +195,10 @@ const hasPaymentMethod = computed(() => {
 	return Boolean(method) &&
 		method.toLowerCase() !== 'not specified';
 });
+
+useHead(() => ({
+	title: `Receipt #${route.params.saleNumber} | Fargo Small Engine Repair`
+}));
 
 function formatDate(value) {
 	if (!value) return '';

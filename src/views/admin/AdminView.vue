@@ -5,8 +5,13 @@
 
 <script setup>
 import { useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 
 const router = useRouter();
+
+useHead(() => ({
+	title: `FSER Admin - Home`
+}));
 
 async function logout() {
 	const response = await fetch('/api/admin/logout', {

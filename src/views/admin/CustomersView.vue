@@ -73,6 +73,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useHead } from '@unhead/vue';
 
 const customers = ref([]);
 const search = ref('');
@@ -99,6 +100,10 @@ const filteredCustomers = computed(() => {
 		)
 	);
 });
+
+useHead(() => ({
+	title: `FSER Admin - Customers List`
+}));
 
 onMounted(async () => {
 	try {

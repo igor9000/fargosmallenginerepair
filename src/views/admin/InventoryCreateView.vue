@@ -133,6 +133,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import AdminMediaEditor from '@/components/admin/AdminMediaEditor.vue';
+import { useHead } from '@unhead/vue';
 
 
 const router = useRouter();
@@ -167,6 +168,11 @@ const item = ref({
 	clearance: false,
 	images: []
 });
+
+
+useHead(() => ({
+	title: `FSER Admin - Inventory ${item.value.sku ? ' - ' + item.value.sku : ' - Create'}`
+}));
 
 function getInventoryMediaUrl(filename) {
 	const sku = String(item.value.sku ?? '').trim();

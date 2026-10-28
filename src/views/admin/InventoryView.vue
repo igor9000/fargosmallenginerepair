@@ -89,6 +89,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useHead } from '@unhead/vue';
 
 const items = ref([]);
 const search = ref('');
@@ -111,6 +112,10 @@ const money = value =>
 		style: 'currency',
 		currency: 'USD'
 	}).format(value);
+
+useHead(() => ({
+	title: `FSER Admin - Inventory List`
+}));
 
 async function load() {
 	error.value = '';

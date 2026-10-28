@@ -97,6 +97,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useHead } from '@unhead/vue';
 
 const tickets = ref([]);
 const search = ref('');
@@ -130,6 +131,10 @@ const statuses = {
 		value: 100
 	}
 }
+
+useHead(() => ({
+	title: `FSER Admin - Service Tickets List`
+}));
 
 function customerName(ticket) {
 	return [ticket.first_name, ticket.last_name]

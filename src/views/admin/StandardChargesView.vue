@@ -95,6 +95,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useHead } from '@unhead/vue';
 
 const charges = ref([]);
 const search = ref('');
@@ -115,6 +116,10 @@ const filteredCharges = computed(() => {
 		)
 	);
 });
+
+useHead(() => ({
+	title: `FSER Admin - Standard Charges List`
+}));
 
 function formatRate(charge) {
 	if (charge.current_value == null) {

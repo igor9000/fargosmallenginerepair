@@ -218,6 +218,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 import AdminMediaEditor from '@/components/admin/AdminMediaEditor.vue';
 import ServiceTicketChargesEditor from './ServiceTicketChargesEditor.vue';
 
@@ -273,6 +274,10 @@ const customerReportUrl = computed(() => {
 		encodeURIComponent(token.value);
 });
 
+
+useHead(() => ({
+	title: `FSER Admin - Service Tickets${ticket.value.ticket_number && route.params.id ? ' - ' + ticket.value.ticket_number : ' - Create'}`
+}));
 
 async function checkExternalNumber() {
 	const number = String(ticket.value.ticket_number ?? '');

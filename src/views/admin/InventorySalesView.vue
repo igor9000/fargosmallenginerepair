@@ -152,12 +152,17 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { useHead } from '@unhead/vue';
 
 const sales = ref([]);
 const search = ref('');
 const loading = ref(true);
 const error = ref('');
 const numberConflict = ref('');
+
+useHead(() => ({
+	title: `FSER Admin - Sales List`
+}));
 
 function customerName(sale) {
 	return [sale.first_name, sale.last_name]

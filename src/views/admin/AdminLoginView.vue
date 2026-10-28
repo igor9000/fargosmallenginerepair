@@ -24,11 +24,16 @@
 <script setup>
 import { ref } from 'vue';
 import { useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 
 const router = useRouter();
 const password = ref('');
 const error = ref('');
 const loading = ref(false);
+
+useHead(() => ({
+	title: `FSER Admin - Login`
+}));
 
 async function login() {
 	loading.value = true;

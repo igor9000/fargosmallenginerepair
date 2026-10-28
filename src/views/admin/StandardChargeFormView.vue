@@ -194,6 +194,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -235,6 +236,10 @@ const version = ref({
 const currentVersionId = computed(() =>
 	versions.value.find(entry => entry.effective_date <= today.value)?.id
 );
+
+useHead(() => ({
+	title: `FSER Admin - Standard Charges${charge.value.name ? ' - ' + charge.value.name : ' - Create'}`
+}));
 
 function suggestSlug() {
 	if (isEditing.value || charge.value.slug.trim()) return;

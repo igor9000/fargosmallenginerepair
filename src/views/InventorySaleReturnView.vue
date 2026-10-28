@@ -151,6 +151,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useHead } from '@unhead/vue';
 import ReceiptHeader from '../components/receipts/ReceiptHeader.vue';
 import ReceiptThankYou from '../components/receipts/ReceiptThankYou.vue';
 
@@ -180,6 +181,10 @@ const originalSaleUrl = computed(() => {
 		encodeURIComponent(receipt.value.sale_token)
 	}`;
 });
+
+useHead(() => ({
+	title: `Return #${route.params.returnId} | Fargo Small Engine Repair`
+}));
 
 function currency(value) {
 	return new Intl.NumberFormat('en-US', {

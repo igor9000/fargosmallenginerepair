@@ -206,6 +206,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -282,6 +283,10 @@ const sale = ref({
 	notes: '',
 	items: [emptyLine()]
 });
+
+useHead(() => ({
+	title: `FSER Admin - Sales${sale.value.sale_number ? ' - ' + sale.value.sale_number : ' - Create'}`
+}));
 
 function customerName(customer) {
 	return [customer.first_name, customer.last_name]

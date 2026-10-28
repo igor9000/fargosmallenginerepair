@@ -274,6 +274,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
+import { useHead } from '@unhead/vue';
 
 const route = useRoute();
 const saleId = Number(route.params.id);
@@ -294,6 +295,10 @@ const form = ref({
 	reason: '',
 	notes: ''
 });
+
+useHead(() => ({
+	title: `FSER Admin - Return${sale.value.sale_number ? ' - ' + sale.value.sale_number : ' - undefined'}`
+}));
 
 function cents(value) {
 	return Math.round(Number(value || 0) * 100);

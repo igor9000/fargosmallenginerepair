@@ -144,6 +144,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
+import { useHead } from '@unhead/vue';
 
 const route = useRoute();
 const router = useRouter();
@@ -169,6 +170,10 @@ const customer = ref({
 	email: '',
 	notes: ''
 });
+
+useHead(() => ({
+	title: `FSER Admin - Customers${customerId.value ? ' - ' + customerId.value : ' - Create'}`
+}));
 
 function formatDate(value) {
 	return new Date(value).toLocaleString('en-US');

@@ -200,6 +200,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { useRoute } from 'vue-router';
+import { useHead } from '@unhead/vue';
 import MediaGallery from '../components/ServiceTicketMediaGallery.vue';
 import ReceiptHeader from '../components/receipts/ReceiptHeader.vue';
 import ReceiptThankYou from '../components/receipts/ReceiptThankYou.vue';
@@ -230,6 +231,10 @@ const statusLabel = computed(() =>
 const statusClass = computed(() =>
 	statusClasses[ticket.value?.status] || 'bg-secondary'
 );
+
+useHead(() => ({
+	title: `Service Ticket #${route.params.ticketNumber} | Fargo Small Engine Repair`
+}));
 
 function currency(value) {
 	return new Intl.NumberFormat('en-US', {

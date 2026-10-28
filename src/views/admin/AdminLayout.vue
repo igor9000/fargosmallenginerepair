@@ -17,11 +17,12 @@
 				<div class="nav-heading">Inventory</div>
 
 				<RouterLink to="/admin/inventory">Inventory</RouterLink>
-				<RouterLink to="/admin/brands">Brands</RouterLink>
+<!-- 				<RouterLink to="/admin/brands">Brands</RouterLink>
 				<RouterLink to="/admin/inventory-types">Inventory Types</RouterLink>
 				<RouterLink to="/admin/inventory-images">Inventory Images</RouterLink>
 				<RouterLink to="/admin/inventory-attributes">Inventory Attributes</RouterLink>
-				<RouterLink to="/admin/inventory-attribute-values">Attribute Values</RouterLink>
+				<RouterLink to="/admin/inventory-attribute-values">Attribute Values</RouterLink> -->
+				<div class="nav-heading">Services</div>
 				<RouterLink to="/admin/standard-charges">Standard Charges</RouterLink>
 			</nav>
 
