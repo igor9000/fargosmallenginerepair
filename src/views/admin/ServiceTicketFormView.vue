@@ -220,7 +220,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import { useHead } from '@unhead/vue';
 import AdminMediaEditor from '@/components/admin/AdminMediaEditor.vue';
-import ServiceTicketChargesEditor from './ServiceTicketChargesEditor.vue';
+import ServiceTicketChargesEditor from '@/components/admin/ServiceTicketChargesEditor.vue';
 
 const route = useRoute();
 const router = useRouter();
