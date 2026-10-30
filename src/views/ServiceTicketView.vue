@@ -30,7 +30,10 @@
 				<div class="card-body justify-content-between align-items-center gap-3">
 					<div class="row">
 						<div class="col">
-							<h2 class="h5 mb-1">Customer Concern</h2>
+							<h2 class="h4 mb-1">
+      							<MessageSquareText class="heading-icon me-1" />
+								Customer Concern
+							</h2>
 							<p class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.description }}</p>
 						</div>
 						<div
@@ -38,7 +41,7 @@
 							class="col-auto"
 						>
 							<div>
-								<h2 class="h5 mb-1">Estimate For Services</h2>
+								<h2 class="h4 mb-1">Estimate For Services</h2>
 							</div>
 							<strong class="fs-3 text-nowrap">
 								{{ currency(ticket.quoted_total) }}
@@ -64,7 +67,10 @@
 				class="card mb-4"
 			>
 				<div class="card-body">
-					<h2 class="h4 mb-3">Diagnostic Report</h2>
+					<h2 class="h4 mb-3">
+      					<SearchCheck class="heading-icon me-1" />
+						Diagnostic Report
+					</h2>
 
 					<p v-if="ticket.diagnostic.notes" class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.diagnostic.notes }}</p>
 				</div>
@@ -73,7 +79,10 @@
 			<!-- Service Notes -->
 			<section v-if="ticket.service && ticket.service.notes" class="card mb-4">
 				<div class="card-body">
-					<h2 class="h4 mb-3">Service Performed</h2>
+					<h2 class="h4 mb-3">
+      					<Wrench class="heading-icon me-1" />
+      					Service Performed
+      				</h2>
 
 					<p v-if="ticket.service.notes" class="report-notes bg-body-tertiary rounded p-3 mb-4">{{ ticket.service.notes }}</p>
 				</div>
@@ -85,7 +94,10 @@
 				class="card mb-4"
 			>
 				<div class="card-body">
-					<h2 class="h4 mb-2">Service Charges</h2>
+					<h2 class="h4 mb-2">
+      					<ReceiptText class="heading-icon me-1" />
+						Service Charges
+					</h2>
 					<p v-if="ticket.status !== 'paid'" class="text-muted mb-3">
 						Payment methods: cash, check, and venmo
 					</p>
@@ -204,6 +216,12 @@ import { useHead } from '@unhead/vue';
 import MediaGallery from '../components/ServiceTicketMediaGallery.vue';
 import ReceiptHeader from '../components/receipts/ReceiptHeader.vue';
 import ReceiptThankYou from '../components/receipts/ReceiptThankYou.vue';
+import {
+  MessageSquareText,
+  SearchCheck,
+  Wrench,
+  ReceiptText
+} from '@lucide/vue';
 
 
 const route = useRoute();
@@ -314,5 +332,10 @@ watch(
 }
 tr:nth-child(1 of .table-footer) td {
 	border-top-width: 2px;
+}
+.heading-icon {
+  width: 1em;
+  height: 1em;
+  flex-shrink: 0;
 }
 </style>
