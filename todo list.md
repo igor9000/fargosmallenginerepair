@@ -37,8 +37,10 @@
     2. back button to "all inventory"?
 12. Customer Admin
     1. Track referral customers
+    2. Auto-increment external id w/ uniqueness
 13. Misc
     1. Add 404 page
+       1. not found products and things like that also need to get 404ed
     2. Add a Sold status to inventory
 14. Service Tickets
     1. N/A
