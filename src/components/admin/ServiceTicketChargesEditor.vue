@@ -1,7 +1,7 @@
 
 <template>
 	<section class="col-12 mt-4">
-		<h2 class="h4 mb-3">Charges</h2>
+		<h2 class="h4 mb-3"><ReceiptText class="heading-icon me-1" /> Charges</h2>
 
 		<div v-if="error" class="alert alert-danger">
 			{{ error }}
@@ -14,7 +14,7 @@
 		<p v-if="loading">Loading billing details...</p>
 
 		<div v-else>
-			<div class="card mb-3">
+			<div class="card mb-3 col-11 ms-auto">
 				<div class="card-body">
 					<label class="form-label fw-bold">
 						Quoted Total (Tax Included)
@@ -39,7 +39,7 @@
 				</div>
 			</div>
 
-			<div class="card mb-3">
+			<div class="card mb-3 col-11 ms-auto">
 				<div class="card-body">
 					<div class="d-flex justify-content-between align-items-center mb-3">
 						<h3 class="h5 mb-0">Entered Charges</h3>
@@ -198,7 +198,7 @@
 				</div>
 			</div>
 
-			<div v-if="calculated" class="card mb-3">
+			<div v-if="calculated" class="card mb-3 col-11 ms-auto">
 				<div class="card-body">
 					<h3 class="h5 mb-3">Calculated Charges</h3>
 
@@ -251,22 +251,20 @@
 					</table>
 				</div>
 			</div>
+			<div class="col-11 ms-auto">
 
-			<p v-else class="text-muted small">
-				Save billing details to calculate the final amounts.
-			</p>
+				<button
+					type="button"
+					class="btn btn-primary"
+					:disabled="saving || loading"
+					@click="saveBilling"
+				>
+					{{ saving ? 'Saving...' : 'Save Billing Details' }}
+				</button>
 
-			<button
-				type="button"
-				class="btn btn-primary"
-				:disabled="saving || loading"
-				@click="saveBilling"
-			>
-				{{ saving ? 'Saving...' : 'Save Billing Details' }}
-			</button>
-
-			<div class="form-text mt-2">
-				Billing saves separately from ticket notes and media.
+				<div class="form-text mt-2">
+					Billing saves separately from ticket notes and media.
+				</div>
 			</div>
 		</div>
 	</section>
@@ -274,6 +272,7 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import { ReceiptText } from '@lucide/vue';
 
 const props = defineProps({
 	ticketId: {

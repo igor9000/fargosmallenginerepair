@@ -4,12 +4,22 @@
 		<div class="d-flex justify-content-between align-items-center mb-4">
 			<h1>{{ isEditing ? 'Edit Service Ticket' : 'Add Service Ticket' }}</h1>
 
-			<RouterLink
-				to="/admin/service-tickets"
-				class="btn btn-outline-secondary"
-			>
-				Cancel
-			</RouterLink>
+			<div>
+				<button
+					type="submit"
+					class="btn btn-primary me-4"
+					:disabled="saving"
+				>
+					{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Ticket' }}
+				</button>
+
+				<RouterLink
+					to="/admin/service-tickets"
+					class="btn btn-outline-secondary"
+				>
+					Cancel
+				</RouterLink>
+			</div>
 		</div>
 
 		<div v-if="error" class="alert alert-danger">{{ error }}</div>
@@ -40,32 +50,47 @@
 				<div class="form-text">Assigned by the external system.</div>
 			</div>
 
-			<div v-if="customerReportUrl" class="col-12 mt-4">
-				<label class="form-label fw-bold">Customer Report Link</label>
+			<div class="col-md-4">
+				<label for="ticket-status" class="form-label">
+					Ticket Status
+				</label>
 
-				<div class="input-group">
-					<input
-						:value="customerReportUrl"
-						class="form-control"
-						readonly
-						aria-label="Customer report link"
-					/>
-
-					<button
-						type="button"
-						class="btn btn-outline-secondary"
-						@click="copyCustomerReportUrl"
-					>
-						Copy Link
-					</button>
-				</div>
+				<select
+					id="ticket-status"
+					v-model="ticket.status"
+					class="form-select"
+				>
+					<option value="new">New</option>
+					<option value="pickup_scheduled">Pickup Scheduled</option>
+					<option value="diagnostic_complete">Diagnostic Complete</option>
+					<option value="services_complete">Services Complete</option>
+					<option value="paid">Paid</option>
+				</select>
 
 				<div class="form-text">
-					Anyone with this link can view the ticket.
+					Status controls what the customer can see.
 				</div>
 			</div>
 
-			<div class="col-md-8">
+			<div v-if="isEditing" class="col-md-4">
+				<div class="col-12">
+					<div v-if="token" class="text-muted small">
+						Token: <code>{{ token }}</code>
+					</div>
+					<div v-if="createdAt" class="text-muted small">
+						Created: {{ formatDate(createdAt) }}
+					</div>
+					<div v-if="completedAt" class="text-muted small">
+						Completed: {{ formatDate(completedAt) }}
+					</div>
+					<div v-if="customerReportUrl" class="text-muted small">
+						Ticket URL: <routerLink to="customerReportUrl">{{ customerReportUrl }}</routerLink>
+					</div>
+				</div>
+			</div>
+
+			<div class="col-12">
+				<h2 class="h4 mb-3">Customer Information</h2>
 				<label class="form-label">Customer *</label>
 
 				<input
@@ -94,8 +119,11 @@
 				</div>
 			</div>
 
+
 			<div class="col-12">
-				<label class="form-label">Customer Concern</label>
+				<label class="form-label">
+      				<MessageSquareText class="heading-icon me-1" /> Customer Concern
+      			</label>
 				<textarea
 					v-model="ticket.description"
 					class="form-control"
@@ -103,59 +131,6 @@
 					placeholder="Equipment, reported problem, customer notes, etc..."
 				></textarea>
 			</div>
-
-
-			<!-- Diagnostics -->
-			<div class="col-12 mt-4">
-				<h2 class="h4 mb-3">Diagnostics</h2>
-
-				<label class="form-label">Diagnostic Notes</label>
-				<textarea
-					v-model="ticket.diagnostic_notes"
-					class="form-control"
-					rows="7"
-					placeholder="Inspection findings, test results, diagnosis..."
-				></textarea>
-			</div>
-
-			<AdminMediaEditor
-				class="mt-3"
-				title="Diagnostic Media"
-				category="diagnostic"
-				:entries="categoryMedia('diagnostic')"
-				:get-media-url="mediaUrl"
-				filename-field="filename"
-				poster-field="poster_filename"
-				:comment-multiline="true"
-				@add="addMedia"
-				@update:entries="updateCategoryMedia('diagnostic', $event)"
-			/>
-
-			<!-- Service -->
-			<div class="col-12 mt-4">
-				<h2 class="h4 mb-3">Service Performed</h2>
-
-				<label class="form-label">Service Notes</label>
-				<textarea
-					v-model="ticket.service_notes"
-					class="form-control"
-					rows="7"
-					placeholder="Work completed, parts replaced, testing performed..."
-				></textarea>
-			</div>
-
-			<AdminMediaEditor
-				class="mt-3"
-				title="Service Media"
-				category="service"
-				:entries="categoryMedia('service')"
-				:get-media-url="mediaUrl"
-				filename-field="filename"
-				poster-field="poster_filename"
-				:comment-multiline="true"
-				@add="addMedia"
-				@update:entries="updateCategoryMedia('service', $event)"
-			/>
 
 			<ServiceTicketChargesEditor
 				v-if="isEditing"
@@ -168,39 +143,61 @@
 				</p>
 			</div>
 
-			<div class="col-md-6 mt-4">
-				<label for="ticket-status" class="form-label">
-					Ticket Status
-				</label>
 
-				<select
-					id="ticket-status"
-					v-model="ticket.status"
-					class="form-select"
-				>
-					<option value="new">New</option>
-					<option value="pickup_scheduled">Pickup Scheduled</option>
-					<option value="diagnostic_complete">Diagnostic Complete</option>
-					<option value="services_complete">Services Complete</option>
-					<option value="paid">Paid</option>
-				</select>
 
-				<div class="form-text">
-					Status controls what the customer can see.
-				</div>
+			<!-- Diagnostics -->
+			<div class="col-12 mt-4">
+				<h2 class="h4 mb-3"><SearchCheck class="heading-icon me-1" /> Diagnostics</h2>
+
+				<label class="form-label">Diagnostic Notes</label>
+				<textarea
+					v-model="ticket.diagnostic_notes"
+					class="form-control"
+					rows="7"
+					placeholder="Inspection findings, test results, diagnosis..."
+				></textarea>
 			</div>
 
-			<div v-if="isEditing" class="col-12">
-				<div v-if="token" class="text-muted small">
-					Token: <code>{{ token }}</code>
-				</div>
-				<div v-if="createdAt" class="text-muted small">
-					Created: {{ formatDate(createdAt) }}
-				</div>
-				<div v-if="completedAt" class="text-muted small">
-					Completed: {{ formatDate(completedAt) }}
-				</div>
+			<!-- Diagnostic Media -->
+			<AdminMediaEditor
+				class="mt-3"
+				title="Diagnostic Media"
+				category="diagnostic"
+				:entries="categoryMedia('diagnostic')"
+				:get-media-url="mediaUrl"
+				filename-field="filename"
+				poster-field="poster_filename"
+				:comment-multiline="true"
+				@add="addMedia"
+				@update:entries="updateCategoryMedia('diagnostic', $event)"
+			/>
+			<!-- Service -->
+			<div class="col-12 mt-4">
+				<h2 class="h4 mb-3"><Wrench class="heading-icon me-1" /> Service Performed</h2>
+
+				<label class="form-label">Service Notes</label>
+				<textarea
+					v-model="ticket.service_notes"
+					class="form-control"
+					rows="7"
+					placeholder="Work completed, parts replaced, testing performed..."
+				></textarea>
 			</div>
+
+
+			<!-- Service Media -->
+			<AdminMediaEditor
+				class="mt-3"
+				title="Service Media"
+				category="service"
+				:entries="categoryMedia('service')"
+				:get-media-url="mediaUrl"
+				filename-field="filename"
+				poster-field="poster_filename"
+				:comment-multiline="true"
+				@add="addMedia"
+				@update:entries="updateCategoryMedia('service', $event)"
+			/>
 
 			<div class="col-12 mt-4">
 				<button
@@ -221,6 +218,12 @@ import { useRoute, useRouter } from 'vue-router';
 import { useHead } from '@unhead/vue';
 import AdminMediaEditor from '@/components/admin/AdminMediaEditor.vue';
 import ServiceTicketChargesEditor from '@/components/admin/ServiceTicketChargesEditor.vue';
+import {
+	MessageSquareText,
+	SearchCheck,
+	Wrench,
+	ReceiptText
+} from '@lucide/vue';
 
 const route = useRoute();
 const router = useRouter();

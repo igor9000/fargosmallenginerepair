@@ -16,7 +16,7 @@
 		</p>
 
 		<div v-for="(entry, index) in entries"
-			:key="entry.key" class="card mb-3">
+			:key="entry.key" class="card mb-3 col-11 ms-auto">
 			<div class="card-body">
 				<div class="row g-3">
 
