@@ -2,23 +2,21 @@
 
 ## Pending
 
-1. reports/receipts pages
-	1. use imgur?
-	```<blockquote class="imgur-embed-pub" lang="en" data-id="a/gwg6QdK"  ><a href="//imgur.com/a/gwg6QdK">R5100</a></blockquote><script async src="//s.imgur.com/min/embed.js" charset="utf-8"></script>```
+
 2. tips pages
-3. Make separate inventory URLs for each equipment type
 4. Contact Form
    1. database log contact requests
    2. add leads to customer table
 5. Add a "Sold" banner to inactive things so that people who have them book marked know theyre gone and/or they dont link-rot from external sources
 6. project health - break out api/admin/index.cjs into specific endpoints
 7. Quality of Life - icons for admin areas
-8. Admin Tickets
+8. Admin Service Tickets
    1. move all major stuff above media (charges, status, token)
    2. (low value) fast way to bulk add images (copy/paste filenames from windows)
    3. in the table, copy the URL for the ticket
    4. add warranty terms?
    5. add equipments? make, model, etc
+   6. add estimate total to list view (in place of token?)
 9. Admin Inventory/Tickets
    1. active flag for receipts (turn them off if something crazy happens)
    2. venmo/paypal online payment thing?
