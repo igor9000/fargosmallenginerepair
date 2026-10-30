@@ -206,6 +206,19 @@ onMounted(async () => {
 			for (const field of Object.keys(customer.value)) {
 				customer.value[field] = existing[field] ?? '';
 			}
+		} else {
+			const response = await fetch(
+				'/api/admin/customers/next-external-id',
+				{ credentials: 'same-origin', cache: 'no-store' }
+			);
+
+			if (!response.ok) {
+				throw new Error('Unable to suggest next customer number');
+			}
+
+			const { nextNumber } = await response.json();
+
+			customer.value.external_id = nextNumber;
 		}
 	} catch (err) {
 		error.value = err.message;

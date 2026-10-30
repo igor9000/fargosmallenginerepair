@@ -1072,6 +1072,29 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 		next(err);
 	}
 
+
+	router.get('/customers/next-external-id', async (req, res, next) => {
+		try {
+			const [[row]] = await db.query(`
+				SELECT COALESCE(MAX(external_id), 0) AS current_max
+				FROM customers
+			`);
+
+			const nextNumber = Number(row.current_max) + 1;
+
+			if (nextNumber > 4294967295) {
+				return res.status(409).json({
+					error: 'No customer numbers available'
+				});
+			}
+
+			res.set('Cache-Control', 'no-store');
+			res.json({ nextNumber });
+		} catch (err) {
+			next(err);
+		}
+	});
+
 	// List customers.
 	router.get('/customers', async (req, res, next) => {
 		try {
