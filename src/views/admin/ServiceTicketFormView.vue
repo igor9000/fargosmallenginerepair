@@ -1,217 +1,229 @@
 
 <template>
 	<section class="container-fluid">
-		<div class="d-flex justify-content-between align-items-center mb-4">
-			<h1>{{ isEditing ? 'Edit Service Ticket' : 'Add Service Ticket' }}</h1>
-
-			<div>
-				<button
-					type="submit"
-					class="btn btn-primary me-4"
-					:disabled="saving"
-				>
-					{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Ticket' }}
-				</button>
-
-				<RouterLink
-					to="/admin/service-tickets"
-					class="btn btn-outline-secondary"
-				>
-					Cancel
-				</RouterLink>
-			</div>
-		</div>
-
-		<div v-if="error" class="alert alert-danger">{{ error }}</div>
-		<p v-if="loading">Loading service ticket...</p>
-
 		<form
-			v-else-if="!loadFailed"
+			if="!loadFailed && !error && !loading"
 			@submit.prevent="save"
 			class="row g-3"
-			style="max-width: 950px"
 		>
-			<div class="col-md-4">
-				<label class="form-label">Ticket Number *</label>
-				<input
-					v-model="ticket.ticket_number"
-					type="number"
-					min="1"
-					max="4294967295"
-					step="1"
-					class="form-control"					
-					@input="numberConflict = ''"
-					@blur="checkExternalNumber"
-					required
-				/>
-				<div v-if="numberConflict" class="text-danger small mt-1">
-					{{ numberConflict }}
-				</div>
-				<div class="form-text">Assigned by the external system.</div>
-			</div>
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h1>{{ isEditing ? 'Edit Service Ticket' : 'Add Service Ticket' }}</h1>
 
-			<div class="col-md-4">
-				<label for="ticket-status" class="form-label">
-					Ticket Status
-				</label>
-
-				<select
-					id="ticket-status"
-					v-model="ticket.status"
-					class="form-select"
-				>
-					<option value="new">New</option>
-					<option value="pickup_scheduled">Pickup Scheduled</option>
-					<option value="diagnostic_complete">Diagnostic Complete</option>
-					<option value="services_complete">Services Complete</option>
-					<option value="paid">Paid</option>
-				</select>
-
-				<div class="form-text">
-					Status controls what the customer can see.
-				</div>
-			</div>
-
-			<div v-if="isEditing" class="col-md-4">
-				<div class="col-12">
-					<div v-if="token" class="text-muted small">
-						Token: <code>{{ token }}</code>
-					</div>
-					<div v-if="createdAt" class="text-muted small">
-						Created: {{ formatDate(createdAt) }}
-					</div>
-					<div v-if="completedAt" class="text-muted small">
-						Completed: {{ formatDate(completedAt) }}
-					</div>
-					<div v-if="customerReportUrl" class="text-muted small">
-						Ticket URL: <routerLink to="customerReportUrl">{{ customerReportUrl }}</routerLink>
-					</div>
-				</div>
-			</div>
-
-			<div class="col-12">
-				<h2 class="h4 mb-3">Customer Information</h2>
-				<label class="form-label">Customer *</label>
-
-				<input
-					v-model="customerSearch"
-					class="form-control mb-2"
-					placeholder="Filter by customer name or external ID..."
-				/>
-
-				<select
-					v-model="ticket.customer_id"
-					class="form-select"
-					required
-				>
-					<option value="" disabled>Select customer</option>
-					<option
-						v-for="customer in filteredCustomers"
-						:key="customer.id"
-						:value="customer.id"
+				<div>
+					<button
+						type="submit"
+						class="btn btn-primary me-4"
+						:disabled="saving"
 					>
-						{{ customerName(customer) }} — #{{ customer.external_id }}
-					</option>
-				</select>
+						{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Ticket' }}
+					</button>
 
-				<div v-if="!filteredCustomers.length" class="form-text">
-					No matching customers.
+					<RouterLink
+						to="/admin/service-tickets"
+						class="btn btn-outline-secondary"
+					>
+						Cancel
+					</RouterLink>
 				</div>
 			</div>
 
+			<div v-if="error" class="alert alert-danger">{{ error }}</div>
+			<p v-if="loading">Loading service ticket...</p>
 
-			<div class="col-12">
-				<label class="form-label">
-      				<MessageSquareText class="heading-icon me-1" /> Customer Concern
-      			</label>
-				<textarea
-					v-model="ticket.description"
-					class="form-control"
-					rows="7"
-					placeholder="Equipment, reported problem, customer notes, etc..."
-				></textarea>
-			</div>
+			<div class="row g-3" style="max-width: 950px">
+				<div class="col-md-4">
+					<label class="form-label">Ticket Number *</label>
+					<input
+						v-model="ticket.ticket_number"
+						type="number"
+						min="1"
+						max="4294967295"
+						step="1"
+						class="form-control"					
+						@input="numberConflict = ''"
+						@blur="checkExternalNumber"
+						required
+					/>
+					<div v-if="numberConflict" class="text-danger small mt-1">
+						{{ numberConflict }}
+					</div>
+					<div class="form-text">Assigned by the external system.</div>
+				</div>
 
-			<ServiceTicketChargesEditor
-				v-if="isEditing"
-				:ticket-id="ticketId"
-			/>
+				<div class="col-md-4">
+					<label for="ticket-status" class="form-label">
+						Ticket Status
+					</label>
 
-			<div v-else-if="!isEditing" class="col-12 mt-4">
-				<p class="text-muted">
-					Create the ticket first, then reopen it to add billing charges.
-				</p>
-			</div>
+					<select
+						id="ticket-status"
+						v-model="ticket.status"
+						class="form-select"
+					>
+						<option value="new">New</option>
+						<option value="pickup_scheduled">Pickup Scheduled</option>
+						<option value="diagnostic_complete">Diagnostic Complete</option>
+						<option value="services_complete">Services Complete</option>
+						<option value="paid">Paid</option>
+					</select>
+
+					<div class="form-text">
+						Status controls what the customer can see.
+					</div>
+				</div>
+
+				<div v-if="isEditing" class="col-md-4">
+					<div class="col-12">
+						<button v-if="token" type="button"
+    							class="btn btn-outline-secondary"
+								title="Copy token"
+								aria-label="Copy token"
+								@click="copyMediaToken"><Copy class="btn-copy-token" :size="15" /> {{ mediaToken }}</button>
+						<div v-if="token" class="text-muted small">
+							Token: <code>{{ token }}</code> 
+						</div>
+						<div v-if="createdAt" class="text-muted small">
+							Created: {{ formatDate(createdAt) }}
+						</div>
+						<div v-if="completedAt" class="text-muted small">
+							Completed: {{ formatDate(completedAt) }}
+						</div>
+						<div v-if="customerReportUrl" class="text-muted small">
+							Ticket URL: <routerLink :to="customerReportPath">{{ customerReportUrl }}</routerLink>
+						</div>
+					</div>
+				</div>
+
+				<div class="col-12">
+					<h2 class="h4 mb-3">Customer Information</h2>
+					<label class="form-label">Customer *</label>
+
+					<input
+						v-model="customerSearch"
+						class="form-control mb-2"
+						placeholder="Filter by customer name or external ID..."
+					/>
+
+					<select
+						v-model="ticket.customer_id"
+						class="form-select"
+						required
+					>
+						<option value="" disabled>Select customer</option>
+						<option
+							v-for="customer in filteredCustomers"
+							:key="customer.id"
+							:value="customer.id"
+						>
+							{{ customerName(customer) }} — #{{ customer.external_id }}
+						</option>
+					</select>
+
+					<div v-if="!filteredCustomers.length" class="form-text">
+						No matching customers.
+					</div>
+				</div>
+
+
+				<div class="col-12">
+					<label class="form-label">
+		  				<MessageSquareText class="heading-icon me-1" /> Customer Concern
+					</label>
+					<textarea
+						v-model="ticket.description"
+						class="form-control"
+						rows="7"
+						placeholder="Equipment, reported problem, customer notes, etc..."
+					></textarea>
+				</div>
+
+				<ServiceTicketChargesEditor
+					v-if="isEditing"
+					:ticket-id="ticketId"
+				/>
+
+				<div v-else-if="!isEditing" class="col-12 mt-4">
+					<p class="text-muted">
+						Create the ticket first, then reopen it to add billing charges.
+					</p>
+				</div>
 
 
 
-			<!-- Diagnostics -->
-			<div class="col-12 mt-4">
-				<h2 class="h4 mb-3"><SearchCheck class="heading-icon me-1" /> Diagnostics</h2>
+				<!-- Diagnostics -->
+				<div class="col-12 mt-4">
+					<h2 class="h4 mb-3"><SearchCheck class="heading-icon me-1" /> Diagnostics</h2>
 
-				<label class="form-label">Diagnostic Notes</label>
-				<textarea
-					v-model="ticket.diagnostic_notes"
-					class="form-control"
-					rows="7"
-					placeholder="Inspection findings, test results, diagnosis..."
-				></textarea>
-			</div>
+					<label class="form-label">Diagnostic Notes</label>
+					<textarea
+						v-model="ticket.diagnostic_notes"
+						class="form-control"
+						rows="7"
+						placeholder="Inspection findings, test results, diagnosis..."
+					></textarea>
+				</div>
 
-			<!-- Diagnostic Media -->
-			<AdminMediaEditor
-				class="mt-3"
-				title="Diagnostic Media"
-				category="diagnostic"
-				:entries="categoryMedia('diagnostic')"
-				:get-media-url="mediaUrl"
-				filename-field="filename"
-				poster-field="poster_filename"
-				:comment-multiline="true"
-				@add="addMedia"
-				@update:entries="updateCategoryMedia('diagnostic', $event)"
-			/>
-			<!-- Service -->
-			<div class="col-12 mt-4">
-				<h2 class="h4 mb-3"><Wrench class="heading-icon me-1" /> Service Performed</h2>
+				<!-- Diagnostic Media -->
+				<AdminMediaEditor
+					class="mt-3"
+					title="Diagnostic Media"
+					category="diagnostic"
+					:entries="categoryMedia('diagnostic')"
+					:get-media-url="mediaUrl"
+					filename-field="filename"
+					poster-field="poster_filename"
+					:comment-multiline="true"
+					@add="addMedia"
+					@update:entries="updateCategoryMedia('diagnostic', $event)"
+				/>
+				<!-- Service -->
+				<div class="col-12 mt-4">
+					<h2 class="h4 mb-3"><Wrench class="heading-icon me-1" /> Service Performed</h2>
 
-				<label class="form-label">Service Notes</label>
-				<textarea
-					v-model="ticket.service_notes"
-					class="form-control"
-					rows="7"
-					placeholder="Work completed, parts replaced, testing performed..."
-				></textarea>
-			</div>
+					<label class="form-label">Service Notes</label>
+					<textarea
+						v-model="ticket.service_notes"
+						class="form-control"
+						rows="7"
+						placeholder="Work completed, parts replaced, testing performed..."
+					></textarea>
+				</div>
 
 
-			<!-- Service Media -->
-			<AdminMediaEditor
-				class="mt-3"
-				title="Service Media"
-				category="service"
-				:entries="categoryMedia('service')"
-				:get-media-url="mediaUrl"
-				filename-field="filename"
-				poster-field="poster_filename"
-				:comment-multiline="true"
-				@add="addMedia"
-				@update:entries="updateCategoryMedia('service', $event)"
-			/>
+				<!-- Service Media -->
+				<AdminMediaEditor
+					class="mt-3"
+					title="Service Media"
+					category="service"
+					:entries="categoryMedia('service')"
+					:get-media-url="mediaUrl"
+					filename-field="filename"
+					poster-field="poster_filename"
+					:comment-multiline="true"
+					@add="addMedia"
+					@update:entries="updateCategoryMedia('service', $event)"
+				/>
 
-			<div class="col-12 mt-4">
-				<button
-					type="submit"
-					class="btn btn-primary"
-					:disabled="saving"
-				>
-					{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Ticket' }}
-				</button>
+				<div class="col-12 mt-4">
+					<button
+						type="submit"
+						class="btn btn-primary"
+						:disabled="saving"
+					>
+						{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Ticket' }}
+					</button>
+				</div>
 			</div>
 		</form>
 	</section>
 </template>
-
+<style scoped>
+.btn-copy-token {
+	width: 1em;
+	height: 1em;
+	flex-shrink: 0;
+}
+</style>
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
@@ -222,7 +234,8 @@ import {
 	MessageSquareText,
 	SearchCheck,
 	Wrench,
-	ReceiptText
+	ReceiptText,
+	Copy
 } from '@lucide/vue';
 
 const route = useRoute();
@@ -277,6 +290,21 @@ const customerReportUrl = computed(() => {
 		encodeURIComponent(token.value);
 });
 
+const customerReportPath = computed(() =>
+  customerReportUrl.value
+    ? new URL(customerReportUrl.value).pathname
+    : ''
+);
+
+
+const mediaToken = computed(() => {
+	if (!ticket.value.ticket_number || !token.value) return;
+
+	return `${ticket.value.ticket_number}-${token.value}`;
+});
+
+
+
 
 useHead(() => ({
 	title: `FSER Admin - Service Tickets${ticket.value.ticket_number && route.params.id ? ' - ' + ticket.value.ticket_number : ' - Create'}`
@@ -320,10 +348,8 @@ async function checkExternalNumber() {
 	}
 }
 
-async function copyCustomerReportUrl() {
-	if (!customerReportUrl.value) return;
-
-	await navigator.clipboard.writeText(customerReportUrl.value);
+async function copyMediaToken() {
+	await navigator.clipboard.writeText(mediaToken.value);
 }
 
 function addMedia(category) {
