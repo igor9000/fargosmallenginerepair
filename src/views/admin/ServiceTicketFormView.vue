@@ -9,10 +9,17 @@
 			<div class="d-flex justify-content-between align-items-center mb-4">
 				<h1>{{ isEditing ? 'Edit Service Ticket' : 'Add Service Ticket' }}</h1>
 
-				<div>
+				<div class="d-flex align-items-center gap-2">
+					<button v-if="mediaToken" type="button"
+						class="btn btn-outline-secondary"
+						title="Copy token"
+						aria-label="Copy token"
+						@click="copyMediaToken">
+							<Copy class="btn-copy-token" :size="15" /> {{ mediaToken }}
+					</button>
 					<button
 						type="submit"
-						class="btn btn-primary me-4"
+						class="btn btn-primary"
 						:disabled="saving"
 					>
 						{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Ticket' }}
@@ -74,11 +81,6 @@
 
 				<div v-if="isEditing" class="col-md-4">
 					<div class="col-12">
-						<button v-if="token" type="button"
-    							class="btn btn-outline-secondary"
-								title="Copy token"
-								aria-label="Copy token"
-								@click="copyMediaToken"><Copy class="btn-copy-token" :size="15" /> {{ mediaToken }}</button>
 						<div v-if="token" class="text-muted small">
 							Token: <code>{{ token }}</code> 
 						</div>
