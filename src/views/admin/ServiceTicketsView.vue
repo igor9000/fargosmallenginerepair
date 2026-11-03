@@ -32,7 +32,6 @@
 					<tr>
 						<th>Ticket #</th>
 						<th>Customer</th>
-						<th>Token</th>
 						<th>Created</th>
 						<th>Status</th>
 						<th>Actions</th>
@@ -41,17 +40,13 @@
 
 				<tbody>
 					<tr v-for="ticket in filteredTickets" :key="ticket.id">
-						<td>{{ ticket.ticket_number }}</td>
+						<td><routerLink :to="`/service-tickets/${ticket.ticket_number}/${ticket.token}`">{{ ticket.ticket_number }}</routerLink></td>
 
 						<td>
 							{{ customerName(ticket) }}
 							<div class="small text-muted">
 								Customer #{{ ticket.customer_external_id }}
 							</div>
-						</td>
-
-						<td>
-							{{ ticket.token || '—' }}
 						</td>
 
 						<td>{{ formatDate(ticket.created_at) }}</td>
