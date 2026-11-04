@@ -84,6 +84,7 @@ module.exports = function({ db }) {
 					media_type,
 					poster_filename,
 					comment,
+					media_label,
 					category
 				FROM service_ticket_media
 				WHERE service_ticket_id = ?
@@ -108,6 +109,7 @@ module.exports = function({ db }) {
 					.map(item => ({
 						media_type: item.media_type,
 						comment: item.comment,
+						media_label: item.media_label,
 						url: mediaUrl(item.filename),
 						poster_url: item.media_type === 'video'
 							? mediaUrl(item.poster_filename)

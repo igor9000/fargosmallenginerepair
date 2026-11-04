@@ -155,6 +155,23 @@
 									placeholder="Optional comment"
 									:maxlength="commentMaxLength || undefined" />
 							</div>
+
+							<!-- Media Label -->
+							<template v-if="showMediaLabel">
+								<div class="col-md-2">
+									<label class="form-label mb-0">Media Label</label>
+								</div>
+
+								<div class="col-md-10">
+									<select v-model="entry.media_label" class="form-select">
+										<option value="">No Badge</option>
+										<option value="before">Before</option>
+										<option value="after">After</option>
+										<option value="damage">Damage</option>
+										<option value="machine reference photo">Machine Reference Photo</option>
+									</select>
+								</div>
+							</template>
 						</div>
 
 						<!-- Actions -->
@@ -241,6 +258,11 @@ const props = defineProps({
 	commentMaxLength: {
 		type: Number,
 		default: null
+	},
+		showMediaLabel
+: {
+		type: Boolean,
+		default: false
 	}
 });
 

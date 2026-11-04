@@ -177,6 +177,7 @@
 					:comment-multiline="true"
 					@add="addMedia"
 					@update:entries="updateCategoryMedia('diagnostic', $event)"
+					:showMediaLabel="true"
 				/>
 				<!-- Service -->
 				<div class="col-12 mt-4">
@@ -204,6 +205,7 @@
 					:comment-multiline="true"
 					@add="addMedia"
 					@update:entries="updateCategoryMedia('service', $event)"
+					:showMediaLabel="true"
 				/>
 
 				<div class="col-12 mt-4">
@@ -361,7 +363,8 @@ function addMedia(category) {
 		media_type: 'image',
 		poster_filename: '',
 		comment: '',
-		category
+		category,
+    media_label: null
 	});
 }
 
@@ -490,6 +493,7 @@ onMounted(async () => {
 				media_type: entry.media_type,
 				poster_filename: entry.poster_filename ?? '',
 				comment: entry.comment ?? '',
+				media_label: entry.media_label ?? null,
 				category: entry.category
 			}));
 
@@ -530,6 +534,7 @@ async function save() {
 						? entry.poster_filename.trim() || null
 						: null,
 					comment: entry.comment,
+					media_label: entry.media_label ?? null,
 					category: entry.category
 				}))
 			})

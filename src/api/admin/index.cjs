@@ -1330,7 +1330,7 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 				),
 				db.query(`
 					SELECT id, filename, media_type,
-						poster_filename, comment, category, sort_order
+						poster_filename, comment, media_label, category, sort_order
 					FROM service_ticket_media
 					WHERE service_ticket_id = ?
 					ORDER BY sort_order, id
@@ -1558,7 +1558,10 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 					!validFilename(entry.poster_filename)) ||
 				(entry.comment != null &&
 					typeof entry.comment !== 'string') ||
-				(entry.comment?.length ?? 0) > 10000
+				(entry.comment?.length ?? 0) > 10000 ||
+				(entry.media_label != null &&
+					(typeof entry.media_label !== 'string' ||
+					entry.media_label.length > 50))
 			) {
 				return 'Invalid service ticket media';
 			}
@@ -1576,9 +1579,10 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 					media_type,
 					poster_filename,
 					comment,
+					media_label,
 					category,
 					sort_order
-				) VALUES (?, ?, ?, ?, ?, ?, ?)
+				) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 			`, [
 				ticketId,
 				entry.filename.trim(),
@@ -1587,6 +1591,7 @@ router.patch('/inventory/:id', requireSameOrigin, requireAdmin,
 					? entry.poster_filename?.trim() || null
 					: null,
 				entry.comment?.trim() || null,
+				entry.media_label?.trim() || null,
 				entry.category,
 				index + 1
 			]);

@@ -38,10 +38,23 @@
 					</video>
 
 					<figcaption
-						v-if="entry.comment"
+						v-if="entry.comment || entry.media_label"
 						class="p-3 small text-muted media-comment"
 					>
-						{{ entry.comment }}
+						<span
+							v-if="entry.media_label"
+							class="badge rounded-pill media-label"
+							:class="[
+								mediaLabelClass(entry.media_label),
+								{ 'me-2': entry.comment }
+							]"
+						>
+							{{ entry.media_label }}
+						</span>
+						<span
+							v-if="entry.comment"
+							class="media-comment-text"
+						>{{ entry.comment }}</span>
 					</figcaption>
 				</figure>
 			</div>
@@ -60,6 +73,32 @@ defineProps({
 		default: 'Photos & Videos'
 	}
 });
+
+
+
+function mediaLabelClass(label) {
+    switch (label?.toLowerCase()) {
+        case 'before':
+            return 'bg-warning text-dark';
+
+        case 'after':
+            return 'bg-success text-white';
+
+        case 'damage':
+            return 'bg-danger text-white';
+
+        case 'machine reference photo':
+            return 'bg-secondary';
+
+        case 'showcase':
+            return 'bg-dark';
+
+        default:
+            return 'bg-info text-dark';
+    }
+}
+
+
 </script>
 
 <style scoped>
@@ -71,7 +110,17 @@ defineProps({
 }
 
 .media-comment {
-	white-space: pre-wrap;
 	overflow-wrap: anywhere;
+}
+
+.media-comment-text {
+	white-space: pre-wrap;
+}
+
+.media-label {
+	font-size: 0.65rem;
+	letter-spacing: 0.035em;
+	text-transform: uppercase;
+    vertical-align: middle;
 }
 </style>
