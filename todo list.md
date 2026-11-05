@@ -11,18 +11,19 @@
 6. project health - break out api/admin/index.cjs into specific endpoints
 7. Quality of Life - icons for admin areas
 8. Admin Service Tickets
-   1. move all major stuff above media (charges, status, token)
-   2. (low value) fast way to bulk add images (copy/paste filenames from windows)
-   3. in the table, copy the URL for the ticket
    4. add warranty terms?
    5. add equipments? make, model, etc
    6. add estimate total to list view (in place of token?)
+   7. add ability to mark images as before/after and add a banner to them so you dont need to keep typing BEFORE and AFTER
 9. Admin Inventory/Tickets
    1. active flag for receipts (turn them off if something crazy happens)
    2. venmo/paypal online payment thing?
    3. Add move to top/move to bottom buttons
 10. Admin Inventory
+    1. move images below the features section
+    2. add a save button at the top
     3. add make, model, etc
+    4. add UTM things
 11. Admin Inventory Sales
     1. ability to delete errantly created sales receipts
 11. Inventory Landing Page
@@ -36,6 +37,7 @@
 12. Customer Admin
     1. Track referral customers
     2. Auto-increment external id w/ uniqueness
+    3. Add 'total spend' column to customer table
 13. Misc
     1. Add 404 page
        1. not found products and things like that also need to get 404ed
