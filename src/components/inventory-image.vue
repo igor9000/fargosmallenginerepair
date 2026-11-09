@@ -44,14 +44,20 @@ const props = defineProps({
   overflow: hidden;
   position: relative;
 }
+
+@media (max-width: 575.98px) {
+	.inventory-card .inventory-image-wrap {
+		height: 350px;
+	}
+}
+
+
+
 .inventory-ribbon {
 	top: 4.75rem;
 	left: -6.5rem;
 	width: 25rem;
 	font-size: 1.5rem;
-	
-
-
 	position: absolute;
 	z-index: 2;
 	padding: 0.35rem 0;
