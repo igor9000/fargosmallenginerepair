@@ -1,6 +1,7 @@
 body {
   font-family: Aptos, Arial, sans-serif;
   --fser-brand-primary: #ce2027;
+  --bs-primary-rgb: 148, 23, 28;
 }
 
 .btn-primary {
@@ -28,4 +29,13 @@ body {
   --bs-btn-hover-bg: #ce2027;
   --bs-btn-hover-border-color: #ce2027;
   --bs-btn-hover-color: #fff;
+
+  --bs-btn-active-bg: #ce2027;
+  --bs-btn-active-border-color: #ce2027;
+  --bs-btn-active-color: #fff;
+}
+
+.dropdown-item {
+  --bs-dropdown-link-active-bg: #ce2027;
+  --bs-dropdown-link-active-color: #fff;
 }
