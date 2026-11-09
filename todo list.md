@@ -22,13 +22,11 @@
 11. Admin Inventory Sales
     1. ability to delete errantly created sales receipts
 11. Inventory Landing Page
-    1. make other equipment cards the same size as featured
-    2. change from "1 available" to "Last one!" or something?
+    1. N/A
 11. Inventory List
-    1. Mobile images aspect ratio is horizontal and it needs to be vertical
+    1. N/A
 11. Inventory Details Page
     1. does bootstrap have a left/right style image gallery?
-    2. back button to "all inventory"?
 12. Customer Admin
     1. Track referral customers
     2. Auto-increment external id w/ uniqueness
