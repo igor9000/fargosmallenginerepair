@@ -166,6 +166,9 @@ onMounted(async () => {
 							<h2 class="h3 fw-bold mb-0">
 								Featured Equipment
 							</h2>
+
+							<hr class="flex-grow-1 border-brand-primary
+								border-3 opacity-100 m-0">
 						</div>
 
 						<div class="row g-4">
