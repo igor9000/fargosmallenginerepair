@@ -218,61 +218,61 @@ onMounted(async () => {
 
 							</div>
 
-<!-- ALL EQUIPMENT CARD -->
-<div class="col-sm-6 col-lg-4">
-	<RouterLink
-		to="/inventory/all"
-		class="card h-100 shadow-sm
-			category-card
-			text-decoration-none text-reset">
+							<!-- ALL EQUIPMENT CARD -->
+							<div class="col-sm-6 col-lg-4">
+								<RouterLink
+									to="/inventory/all"
+									class="card h-100 shadow-sm
+										category-card
+										text-decoration-none text-reset">
 
-		<div class="category-photo featured-photo bg-body-tertiary">
-			<div
-				v-if="allEquipmentPhotos.length"
-				class="all-equipment-collage"
-				:class="{
-					'single-photo': allEquipmentPhotos.length === 1,
-					'two-photos': allEquipmentPhotos.length === 2
-				}">
+									<div class="category-photo featured-photo bg-body-tertiary">
+										<div
+											v-if="allEquipmentPhotos.length"
+											class="all-equipment-collage"
+											:class="{
+												'single-photo': allEquipmentPhotos.length === 1,
+												'two-photos': allEquipmentPhotos.length === 2
+											}">
 
-				<img
-					v-for="type in allEquipmentPhotos"
-					:key="type.id"
-					:src="type.photo"
-					:alt="type.name"
-					loading="lazy"
-					@error="failedImages[type.id] = true"
-				/>
-			</div>
+											<img
+												v-for="type in allEquipmentPhotos"
+												:key="type.id"
+												:src="type.photo"
+												:alt="type.name"
+												loading="lazy"
+												@error="failedImages[type.id] = true"
+											/>
+										</div>
 
-			<div v-else class="category-placeholder">
-				<span class="fw-semibold text-muted">
-					All Equipment
-				</span>
-			</div>
-		</div>
+										<div v-else class="category-placeholder">
+											<span class="fw-semibold text-muted">
+												All Equipment
+											</span>
+										</div>
+									</div>
 
-		<div class="card-body">
-			<div class="d-flex flex-wrap
-				justify-content-between
-				align-items-center gap-2">
+									<div class="card-body">
+										<div class="d-flex flex-wrap
+											justify-content-between
+											align-items-center gap-2">
 
-				<h3 class="h4 fw-bold mb-0">
-					All Equipment
-				</h3>
+											<h3 class="h4 fw-bold mb-0">
+												All Equipment
+											</h3>
 
-				<span class="badge text-bg-light border">
-					{{ availabilityLabel(allAvailableCount) }}
-				</span>
-			</div>
+											<span class="badge text-bg-light border">
+												{{ availabilityLabel(allAvailableCount) }}
+											</span>
+										</div>
 
-			<p class="text-muted mt-2 mb-0">
-				Browse our complete selection of inspected
-				and serviced outdoor power equipment.
-			</p>
-		</div>
-	</RouterLink>
-</div>
+										<p class="text-muted mt-2 mb-0">
+											Browse our complete selection of inspected
+											and serviced outdoor power equipment.
+										</p>
+									</div>
+								</RouterLink>
+							</div>
 
 						</div>
 					</section>
@@ -352,7 +352,7 @@ onMounted(async () => {
 						<!-- Unavailable categories -->
 						<div v-if="otherUnavailable.length">
 							<h3 class="h5 fw-bold mb-2">
-								Currently Unavailable
+								Check Back Soon For More
 							</h3>
 
 							<p class="small text-muted mb-3">
@@ -405,8 +405,8 @@ onMounted(async () => {
     object-fit: contain;
 }
 
-.other-photo {
-	height: 185px;
+.other-photo img {
+    aspect-ratio: 4 / 3;
 }
 
 .category-photo img {
@@ -436,12 +436,6 @@ onMounted(async () => {
 
 .border-brand-primary {
 	border-color: var(--fser-brand-primary);
-}
-
-@media (max-width: 575.98px) {
-	.featured-photo {
-		height: 220px;
-	}
 }
 
 
