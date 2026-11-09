@@ -212,18 +212,6 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.inventory-description {
-	white-space: pre-line;
-}
-.inventory-image {
-	height: 350px;
-	object-fit: cover;
-}
-.delivery-banner {
-	background: #ffc107;
-	color: #212529;
-	border-bottom: 1px solid rgba(0, 0, 0, 0.15);
-}
 .border-brand-primary {
 	border-color: var(--fser-brand-primary);
 }
