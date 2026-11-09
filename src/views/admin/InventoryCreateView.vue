@@ -1,129 +1,137 @@
 
 <template>
 	<section class="container-fluid">
-		<div class="d-flex justify-content-between align-items-center mb-4">
-			<h1>{{ isEditing ? 'Edit Inventory' : 'Add Inventory' }}</h1>
-			<RouterLink to="/admin/inventory" class="btn btn-outline-secondary">
-				Cancel
-			</RouterLink>
-		</div>
+		<form @submit.prevent="save" class="row g-3">
+			<div class="d-flex justify-content-between align-items-center mb-4">
+				<h1>{{ isEditing ? 'Edit Inventory' : 'Add Inventory' }}</h1>
 
-		<div v-if="error" class="alert alert-danger">{{ error }}</div>
-
-		<form @submit.prevent="save" class="row g-3" style="max-width: 950px">
-			<div class="col-md-4">
-				<label class="form-label">SKU *</label>
-				<input v-model="item.sku" class="form-control"
-					maxlength="255" required />
+				<div class="d-flex align-items-center gap-2">
+					<button type="submit" class="btn btn-primary"
+						:disabled="saving || loading">
+						{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Inventory Item' }}
+					</button>
+					<RouterLink to="/admin/inventory" class="btn btn-outline-secondary">
+						Cancel
+					</RouterLink>
+				</div>
 			</div>
 
-			<div class="col-md-8">
-				<label class="form-label">Name *</label>
-				<input v-model="item.name" class="form-control"
-					maxlength="255" @input="updateSlug" required />
-			</div>
+			<div class="row g-3" style="max-width: 950px">
+				<div v-if="error" class="alert alert-danger">{{ error }}</div>
 
-			<div class="col-12">
-				<label class="form-label">Description</label>
-				<textarea v-model="item.description"
-					class="form-control" rows="5"></textarea>
-			</div>
-
-			<div class="col-md-4">
-				<label class="form-label">Price</label>
-				<input v-model="item.price" type="number" min="0"
-					max="99999999.99" step="0.01" class="form-control" />
-			</div>
-
-			<div class="col-md-4">
-				<label class="form-label">Inventory Type *</label>
-				<select v-model="item.inventory_type_id"
-					class="form-select" required>
-					<option value="" disabled>Select type</option>
-					<option v-for="type in types" :key="type.id" :value="type.id">
-						{{ type.name }}
-					</option>
-				</select>
-			</div>
-
-			<div class="col-md-4">
-				<label class="form-label">Brand</label>
-				<select v-model="item.brand_id" class="form-select">
-					<option :value="null">No brand</option>
-					<option v-for="brand in brands" :key="brand.id" :value="brand.id">
-						{{ brand.name }}
-					</option>
-				</select>
-			</div>
-
-			<div class="col-12">
-				<label class="form-label">Slug</label>
-				<input v-model="item.slug" @input="slugEdited = true"
-					class="form-control" maxlength="255" />
-			</div>
-
-			<div class="col-12 d-flex gap-4 flex-wrap">
-				<label v-for="field in flags" :key="field" class="form-check">
-					<input v-model="item[field]" type="checkbox"
-						class="form-check-input" />
-					<span class="form-check-label text-capitalize">{{ field }}</span>
-				</label>
-			</div>
-
-			<!-- Media -->
-			<AdminMediaEditor
-				class="mt-5"
-				title="Images & Videos"
-				:entries="item.images"
-				:get-media-url="getInventoryMediaUrl"
-				:show-flags="true"
-				:comment-max-length="255"
-				@add="addMedia"
-				@update:entries="updateMediaEntries"
-				@set-primary="setPrimaryEntry"
-				@active-change="ensurePrimary"
-				@media-type-change="mediaTypeChanged"
-			/>
-
-			<!-- Attributes -->
-			<div class="col-12 mt-5">
-				<h2 class="h4 mb-3">Attributes</h2>
-
-				<div v-if="!attributes.length" class="text-muted">
-					No attribute definitions available.
+				<div class="col-md-4">
+					<label class="form-label">SKU *</label>
+					<input v-model="item.sku" class="form-control"
+						maxlength="255" required />
 				</div>
 
-				<div class="row g-3">
-					<div v-for="attribute in attributes"
-						:key="attribute.id" class="col-md-6">
-						<label class="form-label">
-							{{ attribute.name }}
-							<span v-if="attribute.unit" class="text-muted">
-								({{ attribute.unit }})
-							</span>
-						</label>
+				<div class="col-md-8">
+					<label class="form-label">Name *</label>
+					<input v-model="item.name" class="form-control"
+						maxlength="255" @input="updateSlug" required />
+				</div>
 
-						<select v-if="attribute.data_type === 'boolean'"
-							v-model="attributeValues[attribute.id]" class="form-select">
-							<option value="">Not specified</option>
-							<option value="true">Yes</option>
-							<option value="false">No</option>
-						</select>
+				<div class="col-12">
+					<label class="form-label">Description</label>
+					<textarea v-model="item.description"
+						class="form-control" rows="5"></textarea>
+				</div>
 
-						<input v-else
-							v-model="attributeValues[attribute.id]"
-							:type="attribute.data_type === 'number' ? 'number' : 'text'"
-							:step="attribute.data_type === 'number' ? 'any' : undefined"
-							class="form-control" />
+				<div class="col-md-4">
+					<label class="form-label">Price</label>
+					<input v-model="item.price" type="number" min="0"
+						max="99999999.99" step="0.01" class="form-control" />
+				</div>
+
+				<div class="col-md-4">
+					<label class="form-label">Inventory Type *</label>
+					<select v-model="item.inventory_type_id"
+						class="form-select" required>
+						<option value="" disabled>Select type</option>
+						<option v-for="type in types" :key="type.id" :value="type.id">
+							{{ type.name }}
+						</option>
+					</select>
+				</div>
+
+				<div class="col-md-4">
+					<label class="form-label">Brand</label>
+					<select v-model="item.brand_id" class="form-select">
+						<option :value="null">No brand</option>
+						<option v-for="brand in brands" :key="brand.id" :value="brand.id">
+							{{ brand.name }}
+						</option>
+					</select>
+				</div>
+
+				<div class="col-12">
+					<label class="form-label">Slug</label>
+					<input v-model="item.slug" @input="slugEdited = true"
+						class="form-control" maxlength="255" />
+				</div>
+
+				<div class="col-12 d-flex gap-4 flex-wrap">
+					<label v-for="field in flags" :key="field" class="form-check">
+						<input v-model="item[field]" type="checkbox"
+							class="form-check-input" />
+						<span class="form-check-label text-capitalize">{{ field }}</span>
+					</label>
+				</div>
+
+				<!-- Attributes -->
+				<div class="col-12 mt-5">
+					<h2 class="h4 mb-3">Attributes</h2>
+
+					<div v-if="!attributes.length" class="text-muted">
+						No attribute definitions available.
+					</div>
+
+					<div class="row g-3">
+						<div v-for="attribute in attributes"
+							:key="attribute.id" class="col-md-6">
+							<label class="form-label">
+								{{ attribute.name }}
+								<span v-if="attribute.unit" class="text-muted">
+									({{ attribute.unit }})
+								</span>
+							</label>
+
+							<select v-if="attribute.data_type === 'boolean'"
+								v-model="attributeValues[attribute.id]" class="form-select">
+								<option value="">Not specified</option>
+								<option value="true">Yes</option>
+								<option value="false">No</option>
+							</select>
+
+							<input v-else
+								v-model="attributeValues[attribute.id]"
+								:type="attribute.data_type === 'number' ? 'number' : 'text'"
+								:step="attribute.data_type === 'number' ? 'any' : undefined"
+								class="form-control" />
+						</div>
 					</div>
 				</div>
-			</div>
 
-			<div class="col-12 mt-4">
-				<button type="submit" class="btn btn-primary"
-					:disabled="saving || loading">
-					{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Inventory Item' }}
-				</button>
+				<!-- Media -->
+				<AdminMediaEditor
+					class="mt-5"
+					title="Images & Videos"
+					:entries="item.images"
+					:get-media-url="getInventoryMediaUrl"
+					:show-flags="true"
+					:comment-max-length="255"
+					@add="addMedia"
+					@update:entries="updateMediaEntries"
+					@set-primary="setPrimaryEntry"
+					@active-change="ensurePrimary"
+					@media-type-change="mediaTypeChanged"
+				/>
+				<div class="col-12 mt-4">
+					<button type="submit" class="btn btn-primary"
+						:disabled="saving || loading">
+						{{ saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Create Inventory Item' }}
+					</button>
+				</div>
 			</div>
 		</form>
 	</section>
