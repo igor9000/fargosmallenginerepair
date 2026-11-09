@@ -170,7 +170,7 @@ onMounted(async () => {
 				<section class="py-5">
 					<div class="container">
 						<section class="mb-5">
-							<div class="mb-4">
+							<div class="mb-4" v-if="!selectedType">
 								<div class="d-flex align-items-center gap-3">
 									<h2 class="fw-bold mb-0 flex-shrink-0">
 										{{ type.name }}
