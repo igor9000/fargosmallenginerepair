@@ -14,16 +14,11 @@
    4. add warranty terms?
    5. add equipments? make, model, etc
    6. add estimate total to list view (in place of token?)
-   7. add ability to mark images as before/after and add a banner to them so you dont need to keep typing BEFORE and AFTER
 9. Admin Inventory/Tickets
    1. active flag for receipts (turn them off if something crazy happens)
    2. venmo/paypal online payment thing?
-   3. Add move to top/move to bottom buttons
 10. Admin Inventory
-    1. move images below the features section
-    2. add a save button at the top
-    3. add make, model, etc
-    4. add UTM things
+    3. add make, model, etc (create a parent table of equipment that each inventory listing can use, AND service tickets can use)
 11. Admin Inventory Sales
     1. ability to delete errantly created sales receipts
 11. Inventory Landing Page
