@@ -33,6 +33,7 @@
 						<th>Ticket #</th>
 						<th>Customer</th>
 						<th>Created</th>
+						<th class="text-end pe-5">Total</th>
 						<th>Status</th>
 						<th>Actions</th>
 					</tr>
@@ -50,6 +51,10 @@
 						</td>
 
 						<td>{{ formatDate(ticket.created_at) }}</td>
+
+						<td class="text-end fw-semibold pe-5">
+							{{ currency(ticket.quoted_total) }} {{ ticket.quoted_total }}
+						</td>
 
 						<td>
 							<div
@@ -137,6 +142,13 @@ function customerName(ticket) {
 		.join(' ');
 }
 
+function currency(value) {
+	return new Intl.NumberFormat('en-US', {
+		style: 'currency',
+		currency: 'USD'
+	}).format(Number(value));
+}
+
 function formatDate(value) {
 	return value ? new Date(value).toLocaleDateString('en-US') : '—';
 }
@@ -152,6 +164,7 @@ const filteredTickets = computed(() => {
 			customerName(ticket),
 			ticket.customer_external_id,
 			ticket.description,
+			ticket.quoted_total,
 			ticket.token
 		].some(value =>
 			String(value ?? '').toLowerCase().includes(query)
