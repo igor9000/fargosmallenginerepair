@@ -53,7 +53,7 @@
 						<td>{{ formatDate(ticket.created_at) }}</td>
 
 						<td class="text-end fw-semibold pe-5">
-							{{ currency(ticket.quoted_total) }} {{ ticket.quoted_total }}
+							{{ currency(ticket.quoted_total) }}
 						</td>
 
 						<td>
