@@ -150,6 +150,18 @@ onMounted(async () => {
 
 		<!-- Inventory -->
 
+		<section>
+			<div class="container">
+				<RouterLink
+					to="/inventory"
+					class="d-inline-block text-body-secondary fw-semibold font-bold text-decoration-none my-3"
+				>
+					← Inventory Home
+				</RouterLink>
+			</div>
+		</section>
+
+
 		<section v-if="loading" class="py-5">
 			<div class="container">
 				<p>Loading...</p>
@@ -167,7 +179,7 @@ onMounted(async () => {
 				v-for="(type, index) in visibleInventory"
 				:key="type.id"
 			>
-				<section class="py-5">
+				<section class="pb-5">
 					<div class="container">
 						<section class="mb-5">
 							<div class="mb-4" v-if="!selectedType">
